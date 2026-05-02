@@ -1,3 +1,4 @@
+import { resolveFlakeEating } from './mechanics/flakeEat'
 import {
   applyFlakeSeekVelocities,
   integrateFishPositions,
@@ -22,6 +23,7 @@ export function update(state: State, params: Params, deltaMs: number): State {
   next = removeExpiredFood(next, params)
   next = applyFlakeSeekVelocities(next, params, clampedDelta)
   next = integrateFishPositions(next, params, clampedDelta)
+  next = resolveFlakeEating(next)
 
   return next
 }
