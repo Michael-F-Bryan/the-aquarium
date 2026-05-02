@@ -1,3 +1,4 @@
+import { NEVER_ATE } from './satiation'
 import type { Fish, State } from './types'
 
 function phys(x: number, y: number, vx = 0, vy = 0) {
@@ -22,8 +23,7 @@ export function createInitialState(
     weightG: 100,
     health: 3,
     physics: phys(cx, cy, 0, 0),
-    ateFlakeToday: false,
-    atePreyFishToday: false,
+    lastAte: NEVER_ATE,
   }
 
   return {

@@ -1,4 +1,5 @@
 import { rngNext01 } from '../rng'
+import { NEVER_ATE, ateDuringSimDay } from '../satiation'
 import type { Params } from '../params'
 import type { DeadFish, Fish, State } from '../types'
 
@@ -34,8 +35,7 @@ function spawnBaby(
     ageDays: 0,
     weightG: 100,
     health: 3,
-    ateFlakeToday: false,
-    atePreyFishToday: false,
+    lastAte: NEVER_ATE,
     physics: {
       position: {
         x: parent.physics.position.x + jitterX,
@@ -47,8 +47,8 @@ function spawnBaby(
 }
 
 /**
- * One simulated midnight: hunger, mortality, satiation reset for the new
- * day, reproduction (still using pre-birthday age), mutation, then aging.
+ * One simulated midnight: hunger, mortality, reproduction, mutation, aging.
+ * Hunger: no meal during the calendar day that just ended (`completedDayFloor`).
  */
 function closeOneCalendarDay(
   state: State,
@@ -65,8 +65,7 @@ function closeOneCalendarDay(
   let liveFish = state.liveFish.map((fish) => {
     if (fish.health === 0) return fish
     let h: Health = fish.health
-    if (!fish.ateFlakeToday) h = decHealth(h)
-    if (fish.species === 'carnivore' && !fish.atePreyFishToday && h > 0) {
+    if (!ateDuringSimDay(fish.lastAte, completedDayFloor)) {
       h = decHealth(h)
     }
     return { ...fish, health: h }
@@ -79,12 +78,6 @@ function closeOneCalendarDay(
     newDead.push({ ...fish, diedOnDay })
     return false
   })
-
-  liveFish = liveFish.map((fish) => ({
-    ...fish,
-    ateFlakeToday: false,
-    atePreyFishToday: false,
-  }))
 
   const born: Fish[] = []
   let nextId = state.nextEntityId

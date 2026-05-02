@@ -1,13 +1,13 @@
 import { FISH_HALF, MAX_SPEED_CARNIVORE, MAX_SPEED_NORMAL } from '../constants'
+import { hungryWithinLastDay } from '../satiation'
 import type { Params } from '../params'
 import type { State } from '../types'
-import { vecNorm, vecScale, vecSub } from '../vec2'
 
 const SEEK_ACCEL = 5.5
 
 /**
- * Fish that have not eaten flake today accelerate toward the nearest flake.
- * Does not integrate position — movement pass applies velocity once.
+ * Fish that have not eaten in the last 1.0 simulated days steer toward the
+ * nearest flake (README: unfed fish move toward food).
  */
 export function applyFlakeSeekVelocities(
   state: State,
@@ -15,9 +15,11 @@ export function applyFlakeSeekVelocities(
   deltaMs: number,
 ): State {
   const dt = Math.min(deltaMs / 1000, 0.08)
-
   const liveFish = state.liveFish.map((fish) => {
-    if (fish.health === 0 || fish.ateFlakeToday || state.food.length === 0) {
+    if (fish.health === 0 || state.food.length === 0) {
+      return fish
+    }
+    if (!hungryWithinLastDay(state.currentDay, fish.lastAte)) {
       return fish
     }
 
@@ -37,8 +39,11 @@ export function applyFlakeSeekVelocities(
 
     const cap =
       fish.species === 'carnivore' ? MAX_SPEED_CARNIVORE : MAX_SPEED_NORMAL
-    const dir = vecNorm(vecSub({ x: tx, y: ty }, fish.physics.position))
-    const desired = vecScale(dir, cap)
+    const dx = tx - fish.physics.position.x
+    const dy = ty - fish.physics.position.y
+    const len = Math.hypot(dx, dy) || 1
+    const dir = { x: dx / len, y: dy / len }
+    const desired = { x: dir.x * cap, y: dir.y * cap }
     const vx =
       fish.physics.velocity.x +
       (desired.x - fish.physics.velocity.x) * Math.min(1, SEEK_ACCEL * dt)

@@ -34,9 +34,11 @@ export type Fish = {
   weightG: number
   health: 0 | 1 | 2 | 3
   physics: Physics
-  ateFlakeToday: boolean
-  /** Carnivores must eat at least one smaller live fish per calendar day. */
-  atePreyFishToday: boolean
+  /**
+   * Fractional `currentDay` when this fish last consumed food (flake or prey).
+   * Use `NEVER_ATE` (-1) if never fed.
+   */
+  lastAte: number
 }
 
 export type DeadFish = Fish & {

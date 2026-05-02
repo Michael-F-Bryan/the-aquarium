@@ -31,7 +31,7 @@ export function resolveCarnivorePredation(state: State): State {
     eaten.add(best.id)
     newDead.push({ ...best, health: 0, diedOnDay })
     liveFish = liveFish.map((f) => {
-      if (f.id === c.id) return { ...f, atePreyFishToday: true }
+      if (f.id === c.id) return { ...f, lastAte: state.currentDay }
       return f
     })
   }
