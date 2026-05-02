@@ -12,7 +12,7 @@ export function GameInfoSection({ state }: Props) {
       </h2>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         <dt className="text-slate-500">Day</dt>
-        <dd className="font-mono text-slate-200">{state.currentDay}</dd>
+        <dd className="font-mono text-slate-200">{Math.round(state.currentDay * 10) / 10}</dd>
         <dt className="text-slate-500">Score</dt>
         <dd className="font-mono text-slate-200">{score(state)}</dd>
       </dl>
