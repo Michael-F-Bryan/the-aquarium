@@ -92,6 +92,7 @@ function App() {
         </main>
 
         <RightPanel
+          currentDay={gameState.currentDay}
           liveFish={gameState.liveFish}
           deadFish={gameState.deadFish}
           selectedId={selectedId}

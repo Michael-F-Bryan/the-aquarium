@@ -1,12 +1,15 @@
 import type { DeadFish, Fish } from '../../game/types'
 import { healthFace } from '../../game/healthFace'
+import { fishWantsFood } from '../../game/satiation'
+import { HungerGlyph } from './HungerGlyph'
 import { speciesDotClass, speciesLabel } from './speciesDisplay'
 
 type Props = {
+  currentDay: number
   selected: Fish | DeadFish | null
 }
 
-export function SelectedFishSection({ selected }: Props) {
+export function SelectedFishSection({ currentDay, selected }: Props) {
   return (
     <section className="shrink-0 border-t border-slate-800 p-4">
       <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -34,7 +37,13 @@ export function SelectedFishSection({ selected }: Props) {
           </dd>
           <dt className="text-slate-500">Health</dt>
           <dd className="flex items-center gap-2 text-slate-200">
-            <span className="text-lg">{healthFace(selected.health)}</span>
+            <span className="flex items-center gap-1 text-lg">
+              <span>{healthFace(selected.health)}</span>
+              {!('diedOnDay' in selected) &&
+              fishWantsFood(selected, currentDay) ? (
+                <HungerGlyph className="text-sm leading-none text-amber-400/95" />
+              ) : null}
+            </span>
             <span className="font-mono text-slate-400">({selected.health}/3)</span>
           </dd>
           {'diedOnDay' in selected && (

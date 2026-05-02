@@ -1,14 +1,18 @@
 import type { Fish } from '../../game/types'
 import { healthFace } from '../../game/healthFace'
+import { fishWantsFood } from '../../game/satiation'
+import { HungerGlyph } from './HungerGlyph'
 import { speciesDotClass, speciesLabel } from './speciesDisplay'
 
 type Props = {
+  currentDay: number
   liveFish: Fish[]
   selectedId: string | null
   onSelect: (id: string) => void
 }
 
 export function LiveFishListSection({
+  currentDay,
   liveFish,
   selectedId,
   onSelect,
@@ -36,8 +40,11 @@ export function LiveFishListSection({
                   title={speciesLabel(fish.species)}
                   aria-hidden
                 />
-                <span className="shrink-0 text-base" title="Health expression">
-                  {healthFace(fish.health)}
+                <span className="flex shrink-0 items-center gap-0.5 text-base">
+                  <span title="Health expression">{healthFace(fish.health)}</span>
+                  {fishWantsFood(fish, currentDay) ? (
+                    <HungerGlyph className="text-xs leading-none text-amber-400/95" />
+                  ) : null}
                 </span>
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {fish.name}

@@ -4,6 +4,7 @@ import { LiveFishListSection } from './right-panel/LiveFishListSection'
 import { SelectedFishSection } from './right-panel/SelectedFishSection'
 
 type Props = {
+  currentDay: number
   liveFish: Fish[]
   deadFish: DeadFish[]
   selectedId: string | null
@@ -11,6 +12,7 @@ type Props = {
 }
 
 export function RightPanel({
+  currentDay,
   liveFish,
   deadFish,
   selectedId,
@@ -24,11 +26,12 @@ export function RightPanel({
   return (
     <aside className="flex w-80 shrink-0 flex-col border-l border-slate-800 bg-slate-950/80">
       <LiveFishListSection
+        currentDay={currentDay}
         liveFish={liveFish}
         selectedId={selectedId}
         onSelect={onSelect}
       />
-      <SelectedFishSection selected={selected} />
+      <SelectedFishSection currentDay={currentDay} selected={selected} />
       <DeadFishListSection
         deadFish={deadFish}
         selectedId={selectedId}
