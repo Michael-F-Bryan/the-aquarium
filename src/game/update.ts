@@ -1,3 +1,7 @@
+import {
+  applyFlakeSeekVelocities,
+  integrateFishPositions,
+} from './mechanics/flakeSeek'
 import { removeExpiredFood } from './mechanics/foodLifetime'
 import type { Params } from './params'
 import type { State } from './types'
@@ -16,6 +20,8 @@ export function update(state: State, params: Params, deltaMs: number): State {
   }
 
   next = removeExpiredFood(next, params)
+  next = applyFlakeSeekVelocities(next, params, clampedDelta)
+  next = integrateFishPositions(next, params, clampedDelta)
 
   return next
 }
