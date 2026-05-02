@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react'
+import type { State } from '../game/types'
 
-/**
- * Aquarium: full-size canvas (per README). Stub draws water only;
- * fish sprites and names belong here once the sim is wired up.
- */
-export function AquariumCanvas() {
+type Props = {
+  state: State
+}
+
+/** Aquarium canvas: water, food, fish (live + dead). */
+export function AquariumCanvas({ state }: Props) {
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -49,17 +52,14 @@ export function AquariumCanvas() {
         ctx.stroke()
       }
 
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.35)'
-      ctx.font = '13px system-ui, sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('Aquarium canvas (stub)', w / 2, h / 2)
+      render(ctx, state)
     }
 
     paint()
     const ro = new ResizeObserver(paint)
     ro.observe(parent)
     return () => ro.disconnect()
-  }, [])
+  }, [state])
 
   return (
     <canvas
@@ -68,4 +68,41 @@ export function AquariumCanvas() {
       aria-label="Aquarium"
     />
   )
+}
+
+const FOOD_RADIUS = 5
+
+function render(ctx: CanvasRenderingContext2D, state: State) {
+  const { food, liveFish, deadFish } = state
+
+  food.forEach((piece) => {
+    const { x, y } = piece.physics.position
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(0.35)
+
+    ctx.beginPath()
+    ctx.ellipse(0, 0, FOOD_RADIUS * 1.1, FOOD_RADIUS * 0.75, 0, 0, Math.PI * 2)
+    ctx.fillStyle = '#b45309'
+    ctx.fill()
+    ctx.strokeStyle = 'rgba(254, 243, 199, 0.45)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.arc(-1.5, -1, 1.2, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(253, 230, 138, 0.7)'
+    ctx.fill()
+
+    ctx.restore()
+  })
+
+  liveFish.forEach((fish) => {
+    ctx.fillStyle = fish.species === 'normal' ? 'blue' : 'red'
+    ctx.fillRect(fish.physics.position.x, fish.physics.position.y, 10, 10)
+  })
+  deadFish.forEach((fish) => {
+    ctx.fillStyle = 'gray'
+    ctx.fillRect(fish.physics.position.x, fish.physics.position.y, 10, 10)
+  })
 }

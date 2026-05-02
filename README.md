@@ -8,9 +8,9 @@ A browser game where you need to keep your fish alive.
 - The player needs to feed the fish once per day or else it will lose a health point
 - Each fish start with 3 health points. When the fish has 0 health points, it will die.
 - Feeding is done by clicking in the aquarium.
-- Fish that haven't eaten that day will move towards the nearest piece of food
+- Fish that haven't eaten that day will move towards the nearest piece of food and try to eat it
 - An uneaten piece of food will disappear after half a day
-- Every time a fish is fed, it will replenish a health point. If it is already at full health, its weight will increase by 100g.
+- Every time a fish is fed, it will replenish a health point. If it is already at full health, its weight will increase at a rate of 100g per day.
 - Once a fish weighs at least 300g, every day it will have a random chance of reproducing (its age in days, to a max of 25%)
 - When a fish reproduces, it will create a new baby fish. The baby fish will start with 3 health points and weigh 100g
 - Once there are at least 5 fish in the aquarium, each fish will have a 1% chance of mutating into a carnivore fish.

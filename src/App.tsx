@@ -2,15 +2,15 @@ import { useState } from 'react'
 import { AquariumCanvas } from './components/AquariumCanvas'
 import { LeftPanel } from './components/LeftPanel'
 import { RightPanel } from './components/RightPanel'
-import {
-  stubDeadFish,
-  stubHud,
-  stubLiveFish,
-} from './game/stubData'
+import { newGameState, type State } from './game/types'
+import { defaultParams, type Params } from './game/params'
 
 function App() {
+  const [gameState] = useState<State>(() => newGameState())
+  const [params, setParams] = useState<Params>(() => defaultParams)
+
   const [selectedId, setSelectedId] = useState<string | null>(
-    () => stubLiveFish[0]?.id ?? null,
+    () => gameState.liveFish[0]?.id ?? null,
   )
 
   return (
@@ -22,15 +22,15 @@ function App() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <LeftPanel hud={stubHud} />
+        <LeftPanel state={gameState} params={params} setParams={setParams} />
 
         <main className="relative min-h-0 min-w-0 flex-1 bg-slate-900">
-          <AquariumCanvas />
+          <AquariumCanvas state={gameState} />
         </main>
 
         <RightPanel
-          liveFish={stubLiveFish}
-          deadFish={stubDeadFish}
+          liveFish={gameState.liveFish}
+          deadFish={gameState.deadFish}
           selectedId={selectedId}
           onSelect={setSelectedId}
         />
