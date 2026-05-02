@@ -1,3 +1,4 @@
+import { removeExpiredFood } from './mechanics/foodLifetime'
 import type { Params } from './params'
 import type { State } from './types'
 
@@ -9,8 +10,12 @@ export function update(state: State, params: Params, deltaMs: number): State {
   const clampedDelta = Math.min(Math.max(deltaMs, 0), 250)
   const dayAdvance = clampedDelta / params.dayLengthMs
 
-  return {
+  let next: State = {
     ...state,
     currentDay: state.currentDay + dayAdvance,
   }
+
+  next = removeExpiredFood(next, params)
+
+  return next
 }
