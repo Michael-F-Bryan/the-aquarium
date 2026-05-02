@@ -4,6 +4,7 @@ import { LeftPanel } from './components/LeftPanel'
 import { RightPanel } from './components/RightPanel'
 import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
+import { dropFlakeFood } from './game/mechanics/foodDrop'
 import { update } from './game/update'
 
 function App() {
@@ -57,6 +58,20 @@ function App() {
     )
   }, [])
 
+  const handleDropFood = useCallback(
+    (x: number, y: number) => {
+      const w = worldRef.current
+      const p = paramsRef.current
+      const merged: Params = {
+        ...p,
+        aquariumWidth: w.width,
+        aquariumHeight: w.height,
+      }
+      setGameState((prev) => dropFlakeFood(prev, merged, x, y))
+    },
+    [],
+  )
+
   return (
     <div className="flex h-dvh min-h-0 flex-col bg-slate-950 text-slate-100">
       <header className="shrink-0 border-b border-slate-800 bg-slate-900/60 px-4 py-3">
@@ -69,7 +84,11 @@ function App() {
         <LeftPanel state={gameState} params={params} setParams={setParams} />
 
         <main className="relative min-h-0 min-w-0 flex-1 bg-slate-900">
-          <AquariumCanvas state={gameState} onWorldSize={handleWorldSize} />
+          <AquariumCanvas
+            state={gameState}
+            onWorldSize={handleWorldSize}
+            onDropFood={handleDropFood}
+          />
         </main>
 
         <RightPanel

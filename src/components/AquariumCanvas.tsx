@@ -4,10 +4,12 @@ import type { State } from '../game/types'
 type Props = {
   state: State
   onWorldSize?: (width: number, height: number) => void
+  /** Logical canvas coordinates (CSS pixels, same space as fish positions). */
+  onDropFood?: (x: number, y: number) => void
 }
 
 /** Aquarium canvas: water, food, fish (live + dead). */
-export function AquariumCanvas({ state, onWorldSize }: Props) {
+export function AquariumCanvas({ state, onWorldSize, onDropFood }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -65,8 +67,20 @@ export function AquariumCanvas({ state, onWorldSize }: Props) {
   return (
     <canvas
       ref={canvasRef}
-      className="block h-full w-full touch-none"
-      aria-label="Aquarium"
+      role="presentation"
+      className="block h-full w-full cursor-crosshair touch-none"
+      aria-label="Aquarium — click to drop food"
+      onClick={(e) => {
+        if (!onDropFood) return
+        const canvas = canvasRef.current
+        if (!canvas) return
+        const r = canvas.getBoundingClientRect()
+        const scaleX = canvas.clientWidth / r.width || 1
+        const scaleY = canvas.clientHeight / r.height || 1
+        const x = (e.clientX - r.left) * scaleX
+        const y = (e.clientY - r.top) * scaleY
+        onDropFood(x, y)
+      }}
     />
   )
 }

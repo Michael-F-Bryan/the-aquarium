@@ -10,3 +10,15 @@ export const CARNIVORE_KILL_RADIUS = 16
 export const MAX_SPEED_NORMAL = 88
 
 export const MAX_SPEED_CARNIVORE = MAX_SPEED_NORMAL * 1.2
+
+export const BOID_NEIGHBOR_RADIUS = 140
+export const BOID_SEPARATION_WEIGHT = 2.2
+export const BOID_ALIGNMENT_WEIGHT = 1.0
+export const BOID_COHESION_WEIGHT = 0.85
+
+export const HUNT_PERCEPTION = 260
+export const FLEE_PERCEPTION = 200
+
+export const WANDER_STRENGTH = 38
+
+export const DEAD_SINK_SPEED = 42
