@@ -1,9 +1,16 @@
-import type { Params } from "./params";
-import type { State } from "./types";
+import type { Params } from './params'
+import type { State } from './types'
 
+/**
+ * Single entry for the simulation step. Mechanics are applied in order;
+ * each stage returns immutable state.
+ */
 export function update(state: State, params: Params, deltaMs: number): State {
-    const { currentDay } = state
-    const newDay = currentDay + deltaMs / params.dayLengthMs
+  const clampedDelta = Math.min(Math.max(deltaMs, 0), 250)
+  const dayAdvance = clampedDelta / params.dayLengthMs
 
-    return { ...state, currentDay: newDay }
+  return {
+    ...state,
+    currentDay: state.currentDay + dayAdvance,
+  }
 }

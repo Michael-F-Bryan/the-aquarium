@@ -1,5 +1,17 @@
+import { createInitialState } from './initial'
+import type { Params } from './params'
+
 export type State = {
+  /** Fractional simulated day; `Math.floor` is the calendar day index in flight. */
   currentDay: number
+  /**
+   * Greatest calendar day floor for which end-of-day rules have run.
+   * Starts at -1 so day 0 is open until `currentDay` reaches 1.
+   */
+  lastClosedCalendarDayFloor: number
+  nextEntityId: number
+  rngState: number
+  score: number
   liveFish: Fish[]
   deadFish: DeadFish[]
   food: Food[]
@@ -8,6 +20,7 @@ export type State = {
 export type Food = {
   id: string
   physics: Physics
+  /** `state.currentDay` when the flake was dropped (fractional). */
   createdOnDay: number
 }
 
@@ -21,6 +34,9 @@ export type Fish = {
   weightG: number
   health: 0 | 1 | 2 | 3
   physics: Physics
+  ateFlakeToday: boolean
+  /** Carnivores must eat at least one smaller live fish per calendar day. */
+  atePreyFishToday: boolean
 }
 
 export type DeadFish = Fish & {
@@ -38,116 +54,6 @@ export type Physics = {
   }
 }
 
-export function newGameState(): State {
-  return {
-    currentDay: 9,
-    liveFish: stubLiveFish,
-    deadFish: stubDeadFish,
-    food: stubFood,
-  }
+export function newGameState(params: Params): State {
+  return createInitialState(params.aquariumWidth, params.aquariumHeight)
 }
-
-const stubFood: Food[] = [
-  {
-    id: 'food-1',
-    physics: phys(100, 100),
-    createdOnDay: 0,
-  },
-  {
-    id: 'food-2',
-    physics: phys(360, 200),
-    createdOnDay: 0,
-  },
-  {
-    id: 'food-3',
-    physics: phys(220, 320),
-    createdOnDay: 0,
-  },
-]
-
-function phys(x: number, y: number, vx = 0, vy = 0): Physics {
-  return {
-    position: { x, y },
-    velocity: { x: vx, y: vy },
-  }
-}
-
-const stubLiveFish: Fish[] = [
-  {
-    id: 'f-kelp',
-    name: 'Kelp',
-    species: 'normal',
-    ageDays: 6,
-    weightG: 340,
-    health: 3,
-    physics: phys(120, 160, 0.4, -0.2),
-  },
-  {
-    id: 'f-ripple',
-    name: 'Ripple',
-    species: 'normal',
-    ageDays: 4,
-    weightG: 260,
-    health: 3,
-    physics: phys(280, 220, -0.35, 0.15),
-  },
-  {
-    id: 'f-brine',
-    name: 'Brine',
-    species: 'normal',
-    ageDays: 2,
-    weightG: 190,
-    health: 2,
-    physics: phys(200, 280, 0.2, 0.45),
-  },
-  {
-    id: 'f-mako',
-    name: 'Mako',
-    species: 'carnivore',
-    ageDays: 8,
-    weightG: 510,
-    health: 3,
-    physics: phys(340, 140, -0.55, 0.3),
-  },
-  {
-    id: 'f-sprat',
-    name: 'Sprat',
-    species: 'normal',
-    ageDays: 1,
-    weightG: 120,
-    health: 1,
-    physics: phys(90, 240, 0.5, -0.1),
-  },
-  {
-    id: 'f-cove',
-    name: 'Cove',
-    species: 'normal',
-    ageDays: 3,
-    weightG: 210,
-    health: 2,
-    physics: phys(420, 260, -0.15, -0.35),
-  },
-]
-
-const stubDeadFish: DeadFish[] = [
-  {
-    id: 'f-ghost',
-    name: 'Ghost',
-    species: 'normal',
-    ageDays: 5,
-    weightG: 300,
-    health: 0,
-    diedOnDay: 6,
-    physics: phys(260, 320, 0, 0),
-  },
-  {
-    id: 'f-ember',
-    name: 'Ember',
-    species: 'carnivore',
-    ageDays: 4,
-    weightG: 380,
-    health: 0,
-    diedOnDay: 8,
-    physics: phys(180, 340, 0, 0),
-  },
-]

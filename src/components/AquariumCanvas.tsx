@@ -3,11 +3,11 @@ import type { State } from '../game/types'
 
 type Props = {
   state: State
+  onWorldSize?: (width: number, height: number) => void
 }
 
 /** Aquarium canvas: water, food, fish (live + dead). */
-export function AquariumCanvas({ state }: Props) {
-
+export function AquariumCanvas({ state, onWorldSize }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -20,6 +20,7 @@ export function AquariumCanvas({ state }: Props) {
       const dpr = window.devicePixelRatio ?? 1
       const w = parent.clientWidth
       const h = parent.clientHeight
+      onWorldSize?.(w, h)
       canvas.width = Math.max(1, Math.floor(w * dpr))
       canvas.height = Math.max(1, Math.floor(h * dpr))
       canvas.style.width = `${w}px`
@@ -59,7 +60,7 @@ export function AquariumCanvas({ state }: Props) {
     const ro = new ResizeObserver(paint)
     ro.observe(parent)
     return () => ro.disconnect()
-  }, [state])
+  }, [state, onWorldSize])
 
   return (
     <canvas
