@@ -47,6 +47,17 @@ function deadFishEntities(runtime: AquariumRuntime): DeadFishEntity[] {
   return runtime.world.with('deadFish').entities
 }
 
+function snapshotFish(fish: Fish): Fish {
+  return {
+    ...fish,
+    appearance: { ...fish.appearance },
+    physics: {
+      position: { ...fish.physics.position },
+      velocity: { ...fish.physics.velocity },
+    },
+  }
+}
+
 function skeletonEntities(runtime: AquariumRuntime): FishSkeletonEntity[] {
   return runtime.world.with('skeleton').entities
 }
@@ -227,7 +238,7 @@ export const applySocialSteeringSystem: SimulationSystem = {
     const { params, clampedDeltaMs, currentDay } = runtime.simulationEntity.simulation
     const dt = Math.min(clampedDeltaMs / 1000, 0.08)
     const entities = liveFishEntities(runtime)
-    const fishSnapshot = entities.map((entity) => entity.fish)
+    const fishSnapshot = entities.map((entity) => snapshotFish(entity.fish))
     const normals = fishSnapshot.filter((fish) => fish.species === 'normal')
 
     for (let i = 0; i < entities.length; i += 1) {
