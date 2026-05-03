@@ -18,7 +18,18 @@ export type AquariumReadModel = {
 }
 
 export function selectState(runtime: AquariumRuntime): State {
-  return runtime.simulationEntity.simulation.state
+  const simulation = runtime.simulationEntity.simulation
+  return {
+    currentDay: simulation.currentDay,
+    lastClosedCalendarDayFloor: simulation.lastClosedCalendarDayFloor,
+    nextEntityId: simulation.nextEntityId,
+    rngState: simulation.rngState,
+    score: simulation.score,
+    liveFish: runtime.world.with('fish').entities.map((entity) => entity.fish),
+    deadFish: runtime.world.with('deadFish').entities.map((entity) => entity.deadFish),
+    skeletons: runtime.world.with('skeleton').entities.map((entity) => entity.skeleton),
+    food: runtime.world.with('food').entities.map((entity) => entity.food),
+  }
 }
 
 export function selectEvents(runtime: AquariumRuntime): readonly SimulationEvent[] {
