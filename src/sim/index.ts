@@ -34,3 +34,10 @@ export {
 export type { SimulationClockState } from "./simulationClock";
 export { stepFishKinematicsWallDelta } from "./movement/fishKinematics";
 export type { StepFishKinematicsOptions } from "./movement/fishKinematics";
+export { resetFishHungerAfterSuccessfulMeal, stepHungerTimersWallDelta } from "./hungerTimer";
+export {
+  SIMULATION_WORLD_SNAPSHOT_VERSION,
+  deserializeSimulationWorldSnapshot,
+  serializeSimulationWorldSnapshot,
+} from "./worldSnapshot";
+export type { SimulationWorldSnapshot } from "./worldSnapshot";
