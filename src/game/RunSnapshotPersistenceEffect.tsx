@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { saveRunSnapshotToLocalStorage } from "../persistence/runSnapshotStorage";
 import { useSimulationClock } from "./simulationClockContext";
 import { useSimulationWorld } from "./simulationWorldContext";
@@ -7,15 +7,25 @@ import { useSimulationWorld } from "./simulationWorldContext";
 export function RunSnapshotPersistenceEffect() {
   const { world, runSeed } = useSimulationWorld();
   const { paused, simDays } = useSimulationClock();
+  const lastPersistedDayRollover = useRef(Math.floor(simDays));
+
+  const flush = useCallback(() => {
+    saveRunSnapshotToLocalStorage({
+      world,
+      simClockState: { paused, simDays },
+      runSeed,
+    });
+  }, [world, paused, simDays, runSeed]);
 
   useEffect(() => {
-    const flush = () => {
-      saveRunSnapshotToLocalStorage({
-        world,
-        simClockState: { paused, simDays },
-        runSeed,
-      });
-    };
+    const currentDayRollover = Math.floor(simDays);
+    if (currentDayRollover > lastPersistedDayRollover.current) {
+      flush();
+      lastPersistedDayRollover.current = currentDayRollover;
+    }
+  }, [simDays, flush]);
+
+  useEffect(() => {
     window.addEventListener("pagehide", flush);
     window.addEventListener("beforeunload", flush);
     const onVisibility = () => {
@@ -27,7 +37,7 @@ export function RunSnapshotPersistenceEffect() {
       window.removeEventListener("beforeunload", flush);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [world, paused, simDays, runSeed]);
+  }, [flush]);
 
   return null;
 }
