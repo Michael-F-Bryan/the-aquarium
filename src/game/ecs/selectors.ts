@@ -1,7 +1,11 @@
 import type { SimulationEvent } from '../events'
 import type { DeadFish, Fish, FishSkeleton, Food, State } from '../types'
-import type { UpdateResult } from '../update'
 import type { AquariumRuntime } from './world'
+
+export type SimulationStepResult = {
+  readonly state: State
+  readonly events: readonly SimulationEvent[]
+}
 
 export type AquariumReadModel = {
   readonly currentDay: number
@@ -34,7 +38,7 @@ export function selectReadModel(runtime: AquariumRuntime): AquariumReadModel {
   }
 }
 
-export function selectUpdateResult(runtime: AquariumRuntime): UpdateResult {
+export function selectUpdateResult(runtime: AquariumRuntime): SimulationStepResult {
   return {
     state: selectState(runtime),
     events: selectEvents(runtime),

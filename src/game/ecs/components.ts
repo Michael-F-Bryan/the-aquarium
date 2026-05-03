@@ -1,6 +1,6 @@
 import type { SimulationEvent } from '../events'
 import type { Params } from '../params'
-import type { DeadFish, Fish, FishSkeleton, Food, Physics, State } from '../types'
+import type { State } from '../types'
 
 export type SimulationClock = {
   readonly deltaMs: number
@@ -16,12 +16,6 @@ export type SimulationComponent = SimulationClock & {
 export type AquariumEntity = {
   simulation?: SimulationComponent
   events?: SimulationEvent[]
-  liveFish?: true
-  deadFish?: true
-  fish?: Fish | DeadFish
-  food?: Food
-  skeleton?: FishSkeleton
-  physics?: Physics
 }
 
 export type SimulationEntity = AquariumEntity & {

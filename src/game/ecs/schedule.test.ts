@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { simulationSchedule } from './schedule'
+import { minimalState, testParams } from '../test/fixtures'
+import { runSimulationStep, simulationSchedule } from './schedule'
 
 describe('simulationSchedule', () => {
   it('documents the deterministic runtime order', () => {
@@ -14,6 +15,30 @@ describe('simulationSchedule', () => {
       'sink-and-prune-skeletons',
       'run-calendar-boundaries',
       'sink-and-prune-dead-fish',
+    ])
+  })
+
+  it('applies commands before scheduled systems', () => {
+    const state = minimalState({ currentDay: 3 })
+    const params = testParams({ dayLengthMs: 1_000 })
+
+    const { state: next } = runSimulationStep({
+      state,
+      params,
+      deltaMs: 100,
+      commands: [{ type: 'drop-food', x: 20, y: 30 }],
+    })
+
+    expect(next.currentDay).toBeCloseTo(3.1)
+    expect(next.food).toMatchObject([
+      {
+        id: 'food-1',
+        createdOnDay: 3,
+        physics: {
+          position: { x: 20, y: 30 },
+          velocity: { x: 0, y: 0 },
+        },
+      },
     ])
   })
 })
