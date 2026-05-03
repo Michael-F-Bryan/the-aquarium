@@ -1,6 +1,5 @@
 import { rollAppearance } from './appearance'
 import { pickFishName } from './data/fishNames'
-import type { Params } from './params'
 import { NEVER_ATE } from './satiation'
 import type { Fish, GameSnapshotPayload } from './types'
 
@@ -47,10 +46,4 @@ export function createInitialGameSnapshotPayload(
     skeletons: [],
     food: [],
   }
-}
-
-export function createInitialGameSnapshotPayloadFromParams(
-  params: Params,
-): GameSnapshotPayload {
-  return createInitialGameSnapshotPayload(params.aquariumWidth, params.aquariumHeight)
 }

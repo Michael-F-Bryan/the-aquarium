@@ -21,7 +21,7 @@ export function DevSnapshotControls({ gameState, onReplaceGameState }: Props) {
         setError(r.error)
         return
       }
-      onReplaceGameState(r.payload)
+      onReplaceGameState(r.snapshot)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }

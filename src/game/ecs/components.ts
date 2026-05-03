@@ -15,13 +15,13 @@ import type {
 } from './entityAssembly'
 
 export type SimulationClock = {
-  readonly deltaMs: number
-  readonly clampedDeltaMs: number
-  readonly dayAdvance: number
+  deltaMs: number
+  clampedDeltaMs: number
+  dayAdvance: number
 }
 
 export type SimulationComponent = SimulationClock & {
-  readonly params: Params
+  params: Params
   currentDay: GameSnapshotPayload['currentDay']
   lastClosedCalendarDayFloor: GameSnapshotPayload['lastClosedCalendarDayFloor']
   nextEntityId: GameSnapshotPayload['nextEntityId']

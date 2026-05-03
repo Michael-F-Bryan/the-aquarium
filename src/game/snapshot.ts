@@ -9,7 +9,7 @@ export type GameSnapshotV3 = {
 }
 
 export type ParseSnapshotResult =
-  | { ok: true; payload: GameSnapshotPayload }
+  | { ok: true; snapshot: GameSnapshotPayload }
   | { ok: false; error: string }
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -104,11 +104,11 @@ function fishDeathCause(x: unknown): GameSnapshotPayload['deadFish'][0]['deathCa
 
 function deadFish(x: unknown, label: string): GameSnapshotPayload['deadFish'][0] {
   const f = fish(x, label)
-  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  const record = x as Record<string, unknown>
   return {
     ...f,
-    diedOnDay: int(x.diedOnDay, `${label}.diedOnDay`),
-    deathCause: fishDeathCause(x.deathCause),
+    diedOnDay: int(record.diedOnDay, `${label}.diedOnDay`),
+    deathCause: fishDeathCause(record.deathCause),
   }
 }
 
@@ -171,8 +171,8 @@ export function parseGameSnapshot(json: unknown): ParseSnapshotResult {
         error: `Unsupported schemaVersion ${String(schemaVersion)} (expected ${GAME_SNAPSHOT_SCHEMA_VERSION})`,
       }
     }
-    const payload = parseSnapshotPayloadInner(json.state)
-    return { ok: true, payload }
+    const snapshot = parseSnapshotPayloadInner(json.state)
+    return { ok: true, snapshot }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return { ok: false, error: msg }

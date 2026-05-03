@@ -69,7 +69,7 @@ export function parseAutosaveJson(raw: string): LoadAutosaveResult {
       return { ok: false, error: 'Unknown autosave bundle schema' }
     }
     const gameParsed = parseGameSnapshot(o.game)
-    if (!gameParsed.ok) return gameParsed
+    if ('error' in gameParsed) return { ok: false, error: gameParsed.error }
     const params = parseSavedParams(o.params)
     const thumb =
       typeof o.thumbnailDataUrl === 'string' || o.thumbnailDataUrl === null
@@ -77,7 +77,7 @@ export function parseAutosaveJson(raw: string): LoadAutosaveResult {
         : null
     return {
       ok: true,
-      snapshot: gameParsed.payload,
+      snapshot: gameParsed.snapshot,
       params,
       thumbnailDataUrl: thumb,
     }
@@ -93,7 +93,12 @@ export function readAutosaveFromStorage(): LoadAutosaveResult {
   if (typeof localStorage === 'undefined') {
     return { ok: false, error: 'localStorage unavailable' }
   }
-  const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY)
+  let raw: string | null
+  try {
+    raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY)
+  } catch {
+    return { ok: false, error: 'localStorage unavailable' }
+  }
   if (raw === null) return { ok: false, error: 'No autosave found' }
   return parseAutosaveJson(raw)
 }

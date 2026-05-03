@@ -15,7 +15,7 @@ describe('parseGameSnapshot', () => {
     const json = JSON.parse(serializeGameSnapshot(state)) as unknown
     const r = parseGameSnapshot(json)
     expect(r.ok).toBe(true)
-    if (r.ok) expect(r.payload).toEqual(state)
+    if (r.ok) expect(r.snapshot).toEqual(state)
   })
 
   it('rejects wrong schemaVersion', () => {

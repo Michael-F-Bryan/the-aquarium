@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAutosaveJson, parseAutosaveJson } from './autosave'
+import { buildAutosaveJson, parseAutosaveJson, readAutosaveFromStorage } from './autosave'
 import { defaultParams } from './params'
 import { makeTestFish, minimalGameSnapshotPayload } from './test/fixtures'
 
@@ -32,6 +32,24 @@ describe('autosave bundle', () => {
     const r = parseAutosaveJson(raw)
 
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.error).toContain('params.aquariumWidth')
+    if ('error' in r) {
+      expect(r.error).toContain('params.aquariumWidth')
+    }
+  })
+
+  it('returns an error result when storage read throws', () => {
+    const original = globalThis.localStorage
+    const throwingStorage = {
+      getItem: () => {
+        throw new Error('denied')
+      },
+    } as unknown as Storage
+    ;(globalThis as { localStorage?: Storage }).localStorage = throwingStorage
+    try {
+      const r = readAutosaveFromStorage()
+      expect(r).toEqual({ ok: false, error: 'localStorage unavailable' })
+    } finally {
+      ;(globalThis as { localStorage?: Storage }).localStorage = original
+    }
   })
 })

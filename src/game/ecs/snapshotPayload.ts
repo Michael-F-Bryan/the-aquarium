@@ -5,6 +5,7 @@ import {
   foodDtoFromEntity,
   skeletonDtoFromEntity,
 } from './entityAssembly'
+import type { AquariumEntity } from './components'
 import type { AquariumRuntime } from './world'
 
 const liveFishQuery = [
@@ -15,10 +16,9 @@ const liveFishQuery = [
   'fishPhysics',
 ] as const
 
-function isLiveFishEntity(e: {
-  fishIdentity?: unknown
-  deadFishMeta?: unknown
-}): boolean {
+function isLiveFishEntity(
+  e: AquariumEntity,
+): e is Parameters<typeof fishDtoFromLiveEntity>[0] {
   return Boolean(
     e.fishIdentity &&
       e.fishBody &&
