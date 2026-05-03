@@ -21,4 +21,17 @@ describe('autosave bundle', () => {
       expect(r.params.dayLengthMs).toBe(12345)
     }
   })
+
+  it('rejects autosaves with non-finite runtime params', () => {
+    const raw = buildAutosaveJson({
+      state: minimalState(),
+      params: { ...defaultParams, aquariumWidth: Number.POSITIVE_INFINITY },
+      thumbnailDataUrl: null,
+    })
+
+    const r = parseAutosaveJson(raw)
+
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain('params.aquariumWidth')
+  })
 })

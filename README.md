@@ -30,6 +30,7 @@ A browser game where you need to keep your fish alive.
 - **Tests**: `pnpm test` (Vitest, pure TS mechanics).
 - **Dev snapshot** (only in `pnpm dev`): Debug panel can **Copy current** / **Load state** JSON using snapshot **schema v3** (`schemaVersion` + `state`, including `skeletons` and per-fish `appearance`).
 - **Build**: `pnpm build`
+- **Architecture**: see `docs/architecture.md` for the ECS runtime, command, rendering, persistence, and legacy-mechanics boundaries.
 
 ## User Interface
 

@@ -94,11 +94,3 @@ export function applySimulationCommandsWithResults(
   }
   return { state: next, commandResults }
 }
-
-export function applySimulationCommands(
-  state: State,
-  params: Params,
-  commands: readonly SimulationCommand[] = [],
-): State {
-  return applySimulationCommandsWithResults(state, params, commands).state
-}

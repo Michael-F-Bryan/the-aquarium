@@ -35,6 +35,23 @@ describe('parseGameSnapshot', () => {
     expect(r.ok).toBe(false)
   })
 
+  it('rejects non-boolean appearance eyelashes', () => {
+    const state = minimalState({
+      liveFish: [makeTestFish({ id: 'fish-0', name: 'Fin' })],
+    })
+    const json = JSON.parse(serializeGameSnapshot(state)) as {
+      state: {
+        liveFish: Array<{ appearance: { eyelashes: unknown } }>
+      }
+    }
+    json.state.liveFish[0].appearance.eyelashes = 'yes'
+
+    const r = parseGameSnapshot(json)
+
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.error).toContain('eyelashes')
+  })
+
   it('rejects non-object root', () => {
     expect(parseGameSnapshot(null).ok).toBe(false)
   })

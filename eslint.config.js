@@ -19,4 +19,31 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '**/mechanics/calendarDay',
+                '**/mechanics/deadPhysics',
+                '**/mechanics/flakeEat',
+                '**/mechanics/flakeSeek',
+                '**/mechanics/foodLifetime',
+                '**/mechanics/movementSocial',
+                '**/mechanics/predation',
+                '**/mechanics/skeletonPhysics',
+              ],
+              message:
+                'Legacy mechanics are retained for parity tests only. Use src/game/ecs/schedule or appRuntime instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])

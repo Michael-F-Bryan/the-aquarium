@@ -41,6 +41,23 @@ export type LoadAutosaveResult =
   | { ok: true; state: State; params: Params; thumbnailDataUrl: string | null }
   | { ok: false; error: string }
 
+function parseSavedParams(raw: unknown): Params {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    throw new Error('params missing')
+  }
+  const source = raw as Record<string, unknown>
+  const merged = { ...defaultParams }
+  for (const key of Object.keys(defaultParams) as Array<keyof Params>) {
+    const value = source[key]
+    if (value === undefined) continue
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      throw new Error(`params.${key} must be a finite number`)
+    }
+    merged[key] = value
+  }
+  return merged
+}
+
 export function parseAutosaveJson(raw: string): LoadAutosaveResult {
   try {
     const parsed: unknown = JSON.parse(raw)
@@ -53,15 +70,7 @@ export function parseAutosaveJson(raw: string): LoadAutosaveResult {
     }
     const gameParsed = parseGameSnapshot(o.game)
     if (!gameParsed.ok) return gameParsed
-    const paramsRaw = o.params
-    if (typeof paramsRaw !== 'object' || paramsRaw === null) {
-      return { ok: false, error: 'params missing' }
-    }
-    const p = paramsRaw as Params
-    const merged: Params = {
-      ...defaultParams,
-      ...p,
-    }
+    const params = parseSavedParams(o.params)
     const thumb =
       typeof o.thumbnailDataUrl === 'string' || o.thumbnailDataUrl === null
         ? (o.thumbnailDataUrl as string | null)
@@ -69,7 +78,7 @@ export function parseAutosaveJson(raw: string): LoadAutosaveResult {
     return {
       ok: true,
       state: gameParsed.state,
-      params: merged,
+      params,
       thumbnailDataUrl: thumb,
     }
   } catch (e) {

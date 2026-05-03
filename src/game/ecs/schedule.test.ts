@@ -18,6 +18,9 @@ import {
 import type { SimulationStepResult } from './selectors'
 import { runSimulationStep, simulationSchedule } from './schedule'
 
+// These imports are deliberately legacy-only: they let parity tests prove the
+// ECS schedule still preserves migrated gameplay rules without making the old
+// mechanics a production entrypoint again.
 function runLegacyReferenceStep(input: {
   readonly state: State
   readonly params: Params

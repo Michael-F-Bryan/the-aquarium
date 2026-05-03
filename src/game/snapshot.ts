@@ -34,6 +34,11 @@ function str(x: unknown, label: string): string {
   return x
 }
 
+function bool(x: unknown, label: string): boolean {
+  if (typeof x !== 'boolean') throw new Error(`${label} must be a boolean`)
+  return x
+}
+
 function physics(x: unknown, label: string): State['liveFish'][0]['physics'] {
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   const position = x.position
@@ -63,7 +68,7 @@ function parseAppearance(x: unknown, label: string): FishAppearance {
   if (tailShape < 0 || tailShape > 2) throw new Error(`${label}.tailShape must be 0–2`)
   return {
     gender: parseGender(x.gender, `${label}.gender`),
-    eyelashes: Boolean(x.eyelashes),
+    eyelashes: bool(x.eyelashes, `${label}.eyelashes`),
     finScale: num(x.finScale, `${label}.finScale`),
     finShape: finShape as 0 | 1 | 2,
     tailShape: tailShape as 0 | 1 | 2,
