@@ -3,6 +3,7 @@ import { AquariumCanvas } from './components/AquariumCanvas'
 import { LeftPanel } from './components/LeftPanel'
 import { PauseMenuModal } from './components/PauseMenuModal'
 import { RightPanel } from './components/RightPanel'
+import { ToastStack, type ToastItem } from './components/ToastStack'
 import {
   AUTOSAVE_STORAGE_KEY,
   buildAutosaveJson,
@@ -11,6 +12,7 @@ import {
 import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
 import { dropFlakeFood } from './game/mechanics/foodDrop'
+import { formatSimulationEvent } from './game/toastMessages'
 import { update } from './game/update'
 
 function App() {
@@ -26,6 +28,13 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | null>('fish-0')
   const [paused, setPaused] = useState(false)
   const [autosaveThumb, setAutosaveThumb] = useState<string | null>(null)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const toastSeq = useRef(0)
+  const lastToastDedupe = useRef<{ message: string; at: number }>({
+    message: '',
+    at: 0,
+  })
+
   const [hasAutosave, setHasAutosave] = useState(() => {
     try {
       return (
@@ -60,6 +69,18 @@ function App() {
     pausedRef.current = paused
   }, [paused])
 
+  const pushToast = useCallback((message: string) => {
+    const t = Date.now()
+    const last = lastToastDedupe.current
+    if (message === last.message && t - last.at < 1200) return
+    lastToastDedupe.current = { message, at: t }
+    const id = `${t}-${toastSeq.current++}`
+    setToasts((prev) => [...prev.slice(-9), { id, message }])
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((x) => x.id !== id))
+    }, 6500)
+  }, [])
+
   useEffect(() => {
     let raf = 0
     let last = performance.now()
@@ -81,7 +102,18 @@ function App() {
         aquariumWidth: w.width,
         aquariumHeight: w.height,
       }
-      setGameState((prev) => update(prev, merged, rawDelta).state)
+      setGameState((prev) => {
+        const { state, events } = update(prev, merged, rawDelta)
+        if (events.length > 0) {
+          const batch = [...events]
+          queueMicrotask(() => {
+            for (const ev of batch) {
+              pushToast(formatSimulationEvent(ev))
+            }
+          })
+        }
+        return state
+      })
       if (active) {
         raf = requestAnimationFrame(tick)
       }
@@ -92,7 +124,7 @@ function App() {
       active = false
       cancelAnimationFrame(raf)
     }
-  }, [])
+  }, [pushToast])
 
   useEffect(() => {
     const snap = gameRef.current
@@ -266,6 +298,8 @@ function App() {
         onLoadAutosave={handleLoadAutosave}
         onNewGame={handleNewGame}
       />
+
+      <ToastStack toasts={toasts} />
     </div>
   )
 }

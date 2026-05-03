@@ -75,6 +75,7 @@ function closeOneCalendarDay(
 
   let liveFish = state.liveFish.map((fish) => {
     if (fish.health === 0) return fish
+    const oldHealth: Health = fish.health
     let h: Health = fish.health
     if (
       !ateWithinWindowBeforeCalendarClose(
@@ -84,6 +85,30 @@ function closeOneCalendarDay(
       )
     ) {
       h = decHealth(h)
+      if (h < oldHealth) {
+        if (oldHealth === 3 && h === 2) {
+          events.push({
+            type: 'fish_hunger',
+            fishId: fish.id,
+            name: fish.name,
+            level: 'hungry',
+          })
+        } else if (oldHealth === 2 && h === 1) {
+          events.push({
+            type: 'fish_hunger',
+            fishId: fish.id,
+            name: fish.name,
+            level: 'starving',
+          })
+        } else if (oldHealth === 1 && h === 0) {
+          events.push({
+            type: 'fish_hunger',
+            fishId: fish.id,
+            name: fish.name,
+            level: 'famished',
+          })
+        }
+      }
     }
     return { ...fish, health: h }
   })

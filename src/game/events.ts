@@ -12,3 +12,9 @@ export type SimulationEvent =
     }
   | { type: 'fish_born'; fishId: string; name: string; species: Species }
   | { type: 'fish_died'; fishId: string; name: string; reason: 'starvation' }
+  | {
+      type: 'fish_hunger'
+      fishId: string
+      name: string
+      level: 'hungry' | 'starving' | 'famished'
+    }
