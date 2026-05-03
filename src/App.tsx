@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AquariumCanvas } from './components/AquariumCanvas'
+import { AquariumRenderer } from './components/aquarium-r3f/AquariumRenderer'
 import { LeftPanel } from './components/LeftPanel'
 import { PauseMenuModal } from './components/PauseMenuModal'
 import { RightPanel } from './components/RightPanel'
@@ -362,7 +362,7 @@ function App() {
         />
 
         <main className="relative min-h-0 min-w-0 flex-1 bg-slate-900">
-          <AquariumCanvas
+          <AquariumRenderer
             ref={canvasRef}
             state={gameState}
             onWorldSize={handleWorldSize}
