@@ -1,7 +1,11 @@
 import { useFrame } from "@react-three/fiber";
 import { useSimulationClock } from "../game/simulationClockContext";
 import { useSimulationWorld } from "../game/simulationWorldContext";
-import { clampWallDeltaSeconds, stepFishKinematicsWallDelta } from "../sim";
+import {
+  clampWallDeltaSeconds,
+  stepFishKinematicsWallDelta,
+  stepHungerTimersWallDelta,
+} from "../sim";
 
 /**
  * Maps the R3F frame loop to simulation clock advances and authoritative fish
@@ -15,6 +19,7 @@ export function SimulationFrameBridge() {
     if (paused) return;
     const dt = clampWallDeltaSeconds(delta);
     stepFishKinematicsWallDelta(world, { wallDeltaSeconds: dt, simTimeDays: simDays });
+    stepHungerTimersWallDelta(world, { wallDeltaSeconds: dt });
     advanceByWallDelta(dt);
   });
   return null;
