@@ -4,14 +4,26 @@ import type { Params } from '../../game/params'
 type Props = {
   params: Params
   setParams: Dispatch<SetStateAction<Params>>
+  onApplyReviewPreset: () => void
 }
 
-export function DebugControlsSection({ params, setParams }: Props) {
+export function DebugControlsSection({
+  params,
+  setParams,
+  onApplyReviewPreset,
+}: Props) {
   return (
     <section className="min-h-0 flex-1 space-y-3 overflow-y-auto">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">
         Debug
       </h2>
+      <button
+        type="button"
+        onClick={onApplyReviewPreset}
+        className="rounded border border-sky-700/60 bg-sky-950/40 px-2 py-1.5 text-xs text-sky-200 hover:bg-sky-900/40"
+      >
+        Apply review preset
+      </button>
       <label className="block text-xs text-slate-400">
         <span className="mb-1 block text-slate-500">Day length (ms)</span>
         <input

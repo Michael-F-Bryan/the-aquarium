@@ -11,9 +11,19 @@ import {
 } from './game/autosave'
 import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
+import { chooseAutoplayFoodDrop } from './game/autoplay/policy'
 import { dropFlakeFood } from './game/mechanics/foodDrop'
 import { formatSimulationEvent } from './game/toastMessages'
 import { update } from './game/update'
+
+type AutoplayLogEntry = {
+  atDay: number
+  action: 'drop' | 'skip'
+  reason: string
+  targetFishId?: string
+  liveFishCount: number
+  foodCount: number
+}
 
 function App() {
   const [params, setParams] = useState<Params>(() => defaultParams)
@@ -29,6 +39,9 @@ function App() {
   const [paused, setPaused] = useState(false)
   const [autosaveThumb, setAutosaveThumb] = useState<string | null>(null)
   const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [autoplayEnabled, setAutoplayEnabled] = useState(false)
+  const [autoplayIntervalMs, setAutoplayIntervalMs] = useState(400)
+  const [autoplayLog, setAutoplayLog] = useState<AutoplayLogEntry[]>([])
   const toastSeq = useRef(0)
   const lastToastDedupe = useRef<{ message: string; at: number }>({
     message: '',
@@ -81,6 +94,10 @@ function App() {
     }, 6500)
   }, [])
 
+  const appendAutoplayLog = useCallback((entry: AutoplayLogEntry) => {
+    setAutoplayLog((prev) => [...prev.slice(-499), entry])
+  }, [])
+
   useEffect(() => {
     let raf = 0
     let last = performance.now()
@@ -125,6 +142,51 @@ function App() {
       cancelAnimationFrame(raf)
     }
   }, [pushToast])
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    if (!autoplayEnabled) return
+    if (paused) return
+    const delay = Math.min(5000, Math.max(100, autoplayIntervalMs))
+    const timer = window.setInterval(() => {
+      setGameState((prev) => {
+        const decision = chooseAutoplayFoodDrop(prev)
+        if (!decision) {
+          queueMicrotask(() => {
+            appendAutoplayLog({
+              atDay: prev.currentDay,
+              action: 'skip',
+              reason: 'no-target',
+              liveFishCount: prev.liveFish.length,
+              foodCount: prev.food.length,
+            })
+          })
+          return prev
+        }
+        const w = worldRef.current
+        const p = paramsRef.current
+        const merged: Params = {
+          ...p,
+          aquariumWidth: w.width,
+          aquariumHeight: w.height,
+        }
+        const next = dropFlakeFood(prev, merged, decision.x, decision.y)
+        const dropped = next !== prev
+        queueMicrotask(() => {
+          appendAutoplayLog({
+            atDay: prev.currentDay,
+            action: dropped ? 'drop' : 'skip',
+            reason: dropped ? 'policy-drop' : 'drop-rejected',
+            targetFishId: decision.targetFishId,
+            liveFishCount: prev.liveFish.length,
+            foodCount: prev.food.length,
+          })
+        })
+        return next
+      })
+    }, delay)
+    return () => window.clearInterval(timer)
+  }, [appendAutoplayLog, autoplayEnabled, autoplayIntervalMs, paused])
 
   useEffect(() => {
     const snap = gameRef.current
@@ -192,6 +254,15 @@ function App() {
     )
   }, [])
 
+  const handleApplyReviewPreset = useCallback(() => {
+    setParams((p) => ({
+      ...p,
+      dayLengthMs: 20_000,
+      foodLifetimeDays: 2,
+      starvationGraceDays: 5,
+    }))
+  }, [])
+
   const handleDropFood = useCallback(
     (x: number, y: number) => {
       if (pausedRef.current) return
@@ -218,6 +289,28 @@ function App() {
 
   const handleResume = useCallback(() => {
     setPaused(false)
+  }, [])
+
+  const handleCopyAutoplayLog = useCallback(async () => {
+    const payload = JSON.stringify(
+      {
+        createdAt: new Date().toISOString(),
+        params,
+        entries: autoplayLog,
+      },
+      null,
+      2,
+    )
+    try {
+      await navigator.clipboard.writeText(payload)
+      pushToast(`Copied autoplay log (${autoplayLog.length} entries)`)
+    } catch {
+      pushToast('Could not copy autoplay log')
+    }
+  }, [autoplayLog, params, pushToast])
+
+  const handleClearAutoplayLog = useCallback(() => {
+    setAutoplayLog([])
   }, [])
 
   const handleLoadAutosave = useCallback(() => {
@@ -269,6 +362,14 @@ function App() {
           params={params}
           setParams={setParams}
           onReplaceGameState={handleReplaceGameState}
+          onApplyReviewPreset={handleApplyReviewPreset}
+          autoplayEnabled={autoplayEnabled}
+          autoplayIntervalMs={autoplayIntervalMs}
+          autoplayLogCount={autoplayLog.length}
+          onAutoplayToggle={setAutoplayEnabled}
+          onAutoplayIntervalMsChange={setAutoplayIntervalMs}
+          onClearAutoplayLog={handleClearAutoplayLog}
+          onCopyAutoplayLog={handleCopyAutoplayLog}
         />
 
         <main className="relative min-h-0 min-w-0 flex-1 bg-slate-900">
