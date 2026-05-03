@@ -6,4 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig(({ command }) => ({
   plugins: [react(), tailwindcss()],
   base: command === "build" ? "/the-aquarium/" : "/",
+  resolve: {
+    dedupe: ["three"],
+  },
 }));
