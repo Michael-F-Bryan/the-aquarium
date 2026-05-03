@@ -8,6 +8,7 @@ import {
   AUTOSAVE_STORAGE_KEY,
   buildAutosaveJson,
   readAutosaveFromStorage,
+  type LoadAutosaveResult,
 } from './game/autosave'
 import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
@@ -27,19 +28,62 @@ type AppRuntimeCommandMeta = {
   readonly type: 'autoplay-food-drop'
 }
 
-function App() {
-  const [params, setParams] = useState<Params>(() => defaultParams)
-  const [gameState, setGameState] = useState<State>(() =>
-    newGameState(defaultParams),
-  )
-  const [worldSize, setWorldSize] = useState({
-    width: defaultParams.aquariumWidth,
-    height: defaultParams.aquariumHeight,
-  })
+type AppBootstrap = {
+  params: Params
+  gameState: State
+  worldSize: { width: number; height: number }
+  selectedId: string | null
+  autosaveThumb: string | null
+  lastClosedCalendarDayFloor: number
+}
 
-  const [selectedId, setSelectedId] = useState<string | null>('fish-0')
+function createAppBootstrap(): AppBootstrap {
+  const r = readAutosaveFromStorage()
+  if (r.ok) {
+    const selectedId = r.state.liveFish.some((f) => f.id === 'fish-0')
+      ? 'fish-0'
+      : (r.state.liveFish[0]?.id ?? null)
+    return {
+      params: r.params,
+      gameState: r.state,
+      worldSize: {
+        width: r.params.aquariumWidth,
+        height: r.params.aquariumHeight,
+      },
+      selectedId,
+      autosaveThumb: r.thumbnailDataUrl,
+      lastClosedCalendarDayFloor: r.state.lastClosedCalendarDayFloor,
+    }
+  }
+  const params = defaultParams
+  const gameState = newGameState(params)
+  return {
+    params,
+    gameState,
+    worldSize: {
+      width: params.aquariumWidth,
+      height: params.aquariumHeight,
+    },
+    selectedId: 'fish-0',
+    autosaveThumb: null,
+    lastClosedCalendarDayFloor: gameState.lastClosedCalendarDayFloor,
+  }
+}
+
+const appBootstrap = createAppBootstrap()
+
+function App() {
+  const [params, setParams] = useState<Params>(() => appBootstrap.params)
+  const [gameState, setGameState] = useState<State>(() => appBootstrap.gameState)
+  const [worldSize, setWorldSize] = useState(() => appBootstrap.worldSize)
+
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => appBootstrap.selectedId,
+  )
   const [paused, setPaused] = useState(false)
-  const [autosaveThumb, setAutosaveThumb] = useState<string | null>(null)
+  const [autosaveThumb, setAutosaveThumb] = useState<string | null>(
+    () => appBootstrap.autosaveThumb,
+  )
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [autoplayEnabled, setAutoplayEnabled] = useState(false)
   const [autoplayIntervalMs, setAutoplayIntervalMs] = useState(400)
@@ -65,8 +109,8 @@ function App() {
   const worldRef = useRef(worldSize)
   const pausedRef = useRef(paused)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const lastClosedRef = useRef(gameState.lastClosedCalendarDayFloor)
-  const gameRef = useRef(gameState)
+  const lastClosedRef = useRef(appBootstrap.lastClosedCalendarDayFloor)
+  const gameRef = useRef(appBootstrap.gameState)
   const commandQueueRef = useRef(
     createAppRuntimeCommandQueue<AppRuntimeCommandMeta>(),
   )
@@ -248,6 +292,26 @@ function App() {
     [],
   )
 
+  const applyRestoredAutosave = useCallback(
+    (r: Extract<LoadAutosaveResult, { ok: true }>) => {
+      commandQueueRef.current.drain()
+      gameRef.current = r.state
+      setGameState(r.state)
+      setParams(r.params)
+      setWorldSize({
+        width: r.params.aquariumWidth,
+        height: r.params.aquariumHeight,
+      })
+      lastClosedRef.current = r.state.lastClosedCalendarDayFloor
+      setSelectedId((prev) => {
+        if (prev && r.state.liveFish.some((f) => f.id === prev)) return prev
+        return r.state.liveFish[0]?.id ?? null
+      })
+      setAutosaveThumb(r.thumbnailDataUrl)
+    },
+    [],
+  )
+
   const handleReplaceGameState = useCallback((next: State) => {
     commandQueueRef.current.drain()
     gameRef.current = next
@@ -299,18 +363,9 @@ function App() {
   const handleLoadAutosave = useCallback(() => {
     const r = readAutosaveFromStorage()
     if (!r.ok) return
-    commandQueueRef.current.drain()
-    gameRef.current = r.state
-    setGameState(r.state)
-    setParams(r.params)
-    lastClosedRef.current = r.state.lastClosedCalendarDayFloor
-    setSelectedId((prev) => {
-      if (prev && r.state.liveFish.some((f) => f.id === prev)) return prev
-      return r.state.liveFish[0]?.id ?? null
-    })
-    setAutosaveThumb(r.thumbnailDataUrl)
+    applyRestoredAutosave(r)
     setPaused(false)
-  }, [])
+  }, [applyRestoredAutosave])
 
   const handleNewGame = useCallback(() => {
     if (!window.confirm('Start a new game? Unsaved progress in the tank will be lost.')) {
