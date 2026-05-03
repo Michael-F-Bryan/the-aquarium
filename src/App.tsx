@@ -26,34 +26,111 @@ function GameShell() {
   }, [togglePause]);
 
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden">
-      <div className="pointer-events-auto absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-        <DayCounter />
-        <ScorePlaceholder />
-        <ToastLogShell entries={[]} />
-        <button
-          type="button"
-          className="rounded-md border border-neutral-600 bg-neutral-900/90 px-3 py-1.5 text-sm font-medium text-neutral-100 shadow-sm backdrop-blur-sm hover:bg-neutral-800"
-          aria-pressed={paused}
-          onClick={togglePause}
-        >
-          {paused ? "Resume simulation" : "Pause simulation"}
-        </button>
-        {paused ? (
-          <div
-            role="status"
-            aria-live="polite"
-            aria-label="Simulation paused"
-            className="rounded-md border border-amber-700/80 bg-amber-950/95 px-3 py-2 text-sm font-semibold tracking-wide text-amber-100 shadow-md"
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-neutral-950 text-neutral-100">
+      <header
+        role="banner"
+        aria-label="Aquarium controls"
+        className="z-10 flex items-center justify-between gap-3 border-b border-neutral-800/90 bg-neutral-950/95 px-3 py-2.5 backdrop-blur-sm"
+      >
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-semibold tracking-wide text-neutral-100 sm:text-base">
+            The Aquarium
+          </h1>
+          <p className="text-xs text-neutral-400">Playable seed shell layout</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <DayCounter />
+          <button
+            type="button"
+            className="rounded-md border border-neutral-600 bg-neutral-900 px-3 py-1.5 text-sm font-medium text-neutral-100 shadow-sm hover:bg-neutral-800"
+            aria-pressed={paused}
+            onClick={togglePause}
           >
-            Paused — world progression is frozen
+            {paused ? "Resume simulation" : "Pause simulation"}
+          </button>
+        </div>
+      </header>
+      <div
+        data-testid="app-shell-grid"
+        className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 lg:grid-cols-[18rem_minmax(0,1fr)_20rem]"
+      >
+        <main
+          role="main"
+          aria-label="Aquarium tank"
+          className="order-1 min-h-[50dvh] min-w-0 overflow-hidden rounded-lg border border-cyan-900/70 bg-neutral-900/60 shadow-sm lg:order-2 lg:min-h-0"
+        >
+          <TankScene className="h-full min-h-0 w-full flex-1" paused={paused} />
+        </main>
+        <aside
+          role="complementary"
+          aria-label="Simulation overview and tuning"
+          className="order-2 min-h-0 max-h-72 overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-900/70 p-3 lg:order-1 lg:max-h-none"
+        >
+          <div className="space-y-3">
+            <section aria-label="Simulation stats" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                Simulation
+              </h2>
+              <DayCounter />
+              <ScorePlaceholder />
+              <p className="rounded-md border border-neutral-700 bg-neutral-950/70 px-3 py-2 text-sm text-neutral-300">
+                Biomass: placeholder until conversion mechanics are wired.
+              </p>
+            </section>
+            <section aria-label="Debug controls" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Debug</h2>
+              <p className="rounded-md border border-neutral-700 bg-neutral-950/70 px-3 py-2 text-sm text-neutral-300">
+                Day length, food lifetime, and reproduction sliders appear here.
+              </p>
+            </section>
           </div>
-        ) : null}
+        </aside>
+        <aside
+          role="complementary"
+          aria-label="Fish and event details"
+          className="order-3 min-h-0 max-h-72 overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-900/70 p-3 lg:max-h-none"
+        >
+          <div className="space-y-3">
+            <section aria-label="Live fish list" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Live Fish</h2>
+              <p className="rounded-md border border-neutral-700 bg-neutral-950/70 px-3 py-2 text-sm text-neutral-300">
+                Fish roster panel will render active entities.
+              </p>
+            </section>
+            <section aria-label="Selected fish details" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Selected Fish</h2>
+              <p className="rounded-md border border-neutral-700 bg-neutral-950/70 px-3 py-2 text-sm text-neutral-300">
+                Click a fish to inspect vitals and lifecycle events.
+              </p>
+            </section>
+            <section aria-label="Dead fish list" className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Dead Fish</h2>
+              <p className="rounded-md border border-neutral-700 bg-neutral-950/70 px-3 py-2 text-sm text-neutral-300">
+                Dead fish and skeleton history appears here.
+              </p>
+            </section>
+          </div>
+        </aside>
       </div>
-      <TankScene className="h-full min-h-0 w-full flex-1" paused={paused} />
-      <p className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 text-sm text-neutral-400 drop-shadow-sm">
-        The Aquarium
-      </p>
+      <section
+        role="region"
+        aria-label="Toast notifications"
+        className="pointer-events-none absolute bottom-3 left-3 z-20 w-[min(24rem,calc(100%-1.5rem))]"
+      >
+        <div className="pointer-events-auto">
+          <ToastLogShell entries={[]} />
+        </div>
+      </section>
+      {paused ? (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="Simulation paused"
+          className="absolute top-16 right-3 z-30 rounded-md border border-amber-700/80 bg-amber-950/95 px-3 py-2 text-sm font-semibold tracking-wide text-amber-100 shadow-md"
+        >
+          Paused — world progression is frozen
+        </div>
+      ) : null}
     </div>
   );
 }
