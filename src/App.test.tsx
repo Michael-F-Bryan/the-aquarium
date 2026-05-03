@@ -7,9 +7,13 @@ afterEach(() => {
 });
 
 describe("App shell", () => {
-  it("renders the application title so the shell boots visibly", () => {
+  it("renders README-aligned chrome regions", () => {
     render(<App />);
-    expect(screen.getByText("The Aquarium")).toBeTruthy();
+    expect(screen.getByRole("banner", { name: /aquarium controls/i })).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: /simulation overview and tuning/i })).toBeTruthy();
+    expect(screen.getByRole("main", { name: /aquarium tank/i })).toBeTruthy();
+    expect(screen.getByRole("complementary", { name: /fish and event details/i })).toBeTruthy();
+    expect(screen.getByRole("region", { name: /toast notifications/i })).toBeTruthy();
   });
 
   it("mounts the R3F tank scene container with a canvas", () => {
@@ -18,21 +22,23 @@ describe("App shell", () => {
     expect(container.querySelector("canvas")).toBeTruthy();
   });
 
-  it("enforces full-viewport sizing contract for the tank stage", () => {
+  it("enforces responsive shell sizing contract for the tank stage", () => {
     const { container } = render(<App />);
-    const shellRoot = container.firstElementChild;
+    const shellRoot = container.firstElementChild as HTMLElement | null;
+    const shellGrid = screen.getByTestId("app-shell-grid");
     const tankSceneRoot = screen.getByTestId("tank-scene-root");
 
     expect(shellRoot).toBeTruthy();
     expect(shellRoot?.className).toContain("h-dvh");
-    expect(shellRoot?.className).not.toContain("min-h-dvh");
+    expect(shellGrid.className).toContain("lg:grid-cols-[18rem_minmax(0,1fr)_20rem]");
+    expect(shellGrid.className).toContain("grid-cols-1");
     expect(tankSceneRoot.className).toContain("h-full");
     expect(tankSceneRoot.className).toContain("min-h-0");
   });
 
   it("shows the simulation day counter in the HUD", () => {
     render(<App />);
-    expect(screen.getByRole("status", { name: /current simulation day,\s*1/i })).toBeTruthy();
+    expect(screen.getAllByRole("status", { name: /current simulation day,\s*1/i }).length).toBeGreaterThan(0);
   });
 
   it("shows the toast log panel in the HUD", () => {
