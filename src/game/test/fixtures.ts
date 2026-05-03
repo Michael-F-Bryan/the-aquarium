@@ -32,6 +32,7 @@ export const minimalState = (over: Partial<State> = {}): State => ({
   score: 0,
   liveFish: [],
   deadFish: [],
+  skeletons: [],
   food: [],
   ...over,
 })

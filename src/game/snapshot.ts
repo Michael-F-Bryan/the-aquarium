@@ -1,9 +1,9 @@
 import type { State } from './types'
 
 /** Bump when persisted `State` shape changes (save/load, dev JSON). */
-export const GAME_SNAPSHOT_SCHEMA_VERSION = 1 as const
+export const GAME_SNAPSHOT_SCHEMA_VERSION = 2 as const
 
-export type GameSnapshotV1 = {
+export type GameSnapshotV2 = {
   schemaVersion: typeof GAME_SNAPSHOT_SCHEMA_VERSION
   state: State
 }
@@ -85,6 +85,16 @@ function foodPiece(x: unknown, label: string): State['food'][0] {
   }
 }
 
+function fishSkeleton(x: unknown, label: string): State['skeletons'][0] {
+  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  return {
+    id: str(x.id, `${label}.id`),
+    preyName: str(x.preyName, `${label}.preyName`),
+    createdOnDay: num(x.createdOnDay, `${label}.createdOnDay`),
+    physics: physics(x.physics, `${label}.physics`),
+  }
+}
+
 function parseStateInner(raw: unknown): State {
   if (!isRecord(raw)) throw new Error('state must be an object')
   const currentDay = num(raw.currentDay, 'state.currentDay')
@@ -93,11 +103,12 @@ function parseStateInner(raw: unknown): State {
     'state.lastClosedCalendarDayFloor',
   )
   const nextEntityId = int(raw.nextEntityId, 'state.nextEntityId')
-  const rngState = int(raw.rngState, 'state.rngState')
+  const rngState = num(raw.rngState, 'state.rngState')
   const score = num(raw.score, 'state.score')
 
   if (!Array.isArray(raw.liveFish)) throw new Error('state.liveFish must be an array')
   if (!Array.isArray(raw.deadFish)) throw new Error('state.deadFish must be an array')
+  if (!Array.isArray(raw.skeletons)) throw new Error('state.skeletons must be an array')
   if (!Array.isArray(raw.food)) throw new Error('state.food must be an array')
 
   return {
@@ -108,6 +119,7 @@ function parseStateInner(raw: unknown): State {
     score,
     liveFish: raw.liveFish.map((f, i) => fish(f, `state.liveFish[${i}]`)),
     deadFish: raw.deadFish.map((f, i) => deadFish(f, `state.deadFish[${i}]`)),
+    skeletons: raw.skeletons.map((f, i) => fishSkeleton(f, `state.skeletons[${i}]`)),
     food: raw.food.map((f, i) => foodPiece(f, `state.food[${i}]`)),
   }
 }
@@ -132,7 +144,7 @@ export function parseGameSnapshot(json: unknown): ParseSnapshotResult {
 }
 
 export function serializeGameSnapshot(state: State): string {
-  const payload: GameSnapshotV1 = {
+  const payload: GameSnapshotV2 = {
     schemaVersion: GAME_SNAPSHOT_SCHEMA_VERSION,
     state,
   }

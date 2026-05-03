@@ -6,13 +6,13 @@ describe('update', () => {
   it('advances currentDay proportionally to delta and dayLengthMs', () => {
     const state = minimalState({ currentDay: 0 })
     const p = testParams({ dayLengthMs: 10_000 })
-    const next = update(state, p, 100)
+    const { state: next } = update(state, p, 100)
     expect(next.currentDay).toBeCloseTo(0.01)
   })
 
   it('clamps huge delta', () => {
     const state = minimalState({ currentDay: 0 })
-    const next = update(state, testParams(), 999_999)
+    const { state: next } = update(state, testParams(), 999_999)
     expect(next.currentDay).toBeLessThan(1)
   })
 
@@ -25,7 +25,7 @@ describe('update', () => {
       currentDay: 100,
       liveFish: [fish],
     })
-    const next = update(state, testParams(), 16)
+    const { state: next } = update(state, testParams(), 16)
     expect(next.liveFish).toHaveLength(1)
   })
 })

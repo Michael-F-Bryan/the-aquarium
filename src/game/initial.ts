@@ -34,6 +34,7 @@ export function createInitialState(
     score: 0,
     liveFish: [baby],
     deadFish: [],
+    skeletons: [],
     food: [],
   }
 }

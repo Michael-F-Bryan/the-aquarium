@@ -10,6 +10,9 @@ export const FISH_SPRITE_H = 22
 
 export const FOOD_PICKUP_RADIUS = 14
 
+/** Minimum distance between dropped flakes (player spam guard). */
+export const MIN_FOOD_SEPARATION = 28
+
 /** Carnivore must get this close to a smaller fish to consume it. */
 export const CARNIVORE_KILL_RADIUS = 16
 

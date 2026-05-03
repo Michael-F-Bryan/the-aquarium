@@ -22,7 +22,7 @@ describe('resolveFlakeEating', () => {
         },
       ],
     })
-    const next = resolveFlakeEating(state)
+    const { state: next } = resolveFlakeEating(state)
     expect(next.food).toHaveLength(1)
     expect(next.liveFish[0].health).toBe(2)
   })
@@ -48,9 +48,10 @@ describe('resolveFlakeEating', () => {
         },
       ],
     })
-    const next = resolveFlakeEating(state)
+    const { state: next, events } = resolveFlakeEating(state)
     expect(next.food).toHaveLength(0)
     expect(next.liveFish[0].health).toBe(3)
     expect(next.liveFish[0].lastAte).toBe(5)
+    expect(events).toEqual([{ type: 'ate_flake', fishId: 'a', name: 'Test' }])
   })
 })

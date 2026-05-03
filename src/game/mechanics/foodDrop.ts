@@ -1,7 +1,22 @@
+import { MIN_FOOD_SEPARATION } from '../constants'
 import type { Params } from '../params'
 import type { State } from '../types'
+import { dist } from '../vec2'
 
 const FOOD_MARGIN = 8
+
+function tooCloseToExisting(
+  x: number,
+  y: number,
+  food: State['food'],
+): boolean {
+  for (const piece of food) {
+    if (dist({ x, y }, piece.physics.position) < MIN_FOOD_SEPARATION) {
+      return true
+    }
+  }
+  return false
+}
 
 /** Player click: drop a new flake at logical canvas coordinates. */
 export function dropFlakeFood(
@@ -18,6 +33,9 @@ export function dropFlakeFood(
     params.aquariumHeight - FOOD_MARGIN,
     Math.max(FOOD_MARGIN, y),
   )
+  if (tooCloseToExisting(px, py, state.food)) {
+    return state
+  }
   const id = `food-${state.nextEntityId}`
   return {
     ...state,

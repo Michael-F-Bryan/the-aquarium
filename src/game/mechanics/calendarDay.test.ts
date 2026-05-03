@@ -17,7 +17,7 @@ function bigParent(id: string, weightG: number) {
 describe('runCalendarBoundaries', () => {
   it('returns unchanged when floor has not crossed next boundary', () => {
     const state = minimalState({ currentDay: 0.5, lastClosedCalendarDayFloor: -1 })
-    const next = runCalendarBoundaries(state, testParams())
+    const { state: next } = runCalendarBoundaries(state, testParams())
     expect(next).toBe(state)
   })
 
@@ -34,13 +34,13 @@ describe('runCalendarBoundaries', () => {
       liveFish: [fish],
       rngState: 1,
     })
-    const next = runCalendarBoundaries(state, testParams())
+    const { state: next } = runCalendarBoundaries(state, testParams())
     expect(next.lastClosedCalendarDayFloor).toBe(0)
     expect(next.liveFish[0].health).toBe(2)
     expect(next.liveFish[0].ageDays).toBe(1)
   })
 
-  it('may flip normals to carnivores when population >= 5', () => {
+  it('does not mutate adults to carnivores when population >= 5', () => {
     const fish = [
       bigParent('f0', 400),
       bigParent('f1', 400),
@@ -58,10 +58,11 @@ describe('runCalendarBoundaries', () => {
       liveFish: fish,
       rngState: 0x11111111,
     })
-    const next = runCalendarBoundaries(
+    const { state: next } = runCalendarBoundaries(
       state,
-      testParams({ carnivoreMutationChance: 1 }),
+      testParams({ carnivoreMutationChance: 1, reproduceChanceCap: 0 }),
     )
-    expect(next.liveFish.every((f) => f.species === 'carnivore')).toBe(true)
+    expect(next.liveFish.filter((f) => f.id.startsWith('fish-')).length).toBe(5)
+    expect(next.liveFish.every((f) => f.species === 'normal')).toBe(true)
   })
 })

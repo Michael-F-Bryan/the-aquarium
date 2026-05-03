@@ -46,7 +46,7 @@ function App() {
         aquariumWidth: w.width,
         aquariumHeight: w.height,
       }
-      setGameState((prev) => update(prev, merged, rawDelta))
+      setGameState((prev) => update(prev, merged, rawDelta).state)
       if (active) {
         raf = requestAnimationFrame(tick)
       }

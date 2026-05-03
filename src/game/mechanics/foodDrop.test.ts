@@ -1,9 +1,50 @@
 import { describe, expect, it } from 'vitest'
+import { MIN_FOOD_SEPARATION } from '../constants'
 import { dropFlakeFood } from './foodDrop'
 import { minimalState } from '../test/fixtures'
 import { testParams } from '../test/fixtures'
 
 describe('dropFlakeFood', () => {
+  it('rejects drop when another flake is within MIN_FOOD_SEPARATION', () => {
+    const state = minimalState({
+      nextEntityId: 2,
+      food: [
+        {
+          id: 'food-0',
+          createdOnDay: 0,
+          physics: {
+            position: { x: 100, y: 100 },
+            velocity: { x: 0, y: 0 },
+          },
+        },
+      ],
+    })
+    const p = testParams()
+    const dx = MIN_FOOD_SEPARATION * 0.5
+    const next = dropFlakeFood(state, p, 100 + dx, 100)
+    expect(next.food).toHaveLength(1)
+    expect(next.nextEntityId).toBe(2)
+  })
+
+  it('allows drop when far enough from existing flakes', () => {
+    const state = minimalState({
+      nextEntityId: 2,
+      food: [
+        {
+          id: 'food-0',
+          createdOnDay: 0,
+          physics: {
+            position: { x: 100, y: 100 },
+            velocity: { x: 0, y: 0 },
+          },
+        },
+      ],
+    })
+    const p = testParams()
+    const next = dropFlakeFood(state, p, 100 + MIN_FOOD_SEPARATION, 100)
+    expect(next.food).toHaveLength(2)
+  })
+
   it('clamps drop position to aquarium margins', () => {
     const state = minimalState({ nextEntityId: 5 })
     const p = testParams({ aquariumWidth: 100, aquariumHeight: 80 })

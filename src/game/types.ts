@@ -1,6 +1,14 @@
 import { createInitialState } from './initial'
 import type { Params } from './params'
 
+export type FishSkeleton = {
+  id: string
+  preyName: string
+  physics: Physics
+  /** Fractional `currentDay` when the skeleton was created (predation). */
+  createdOnDay: number
+}
+
 export type State = {
   /** Fractional simulated day; `Math.floor` is the calendar day index in flight. */
   currentDay: number
@@ -15,6 +23,8 @@ export type State = {
   score: number
   liveFish: Fish[]
   deadFish: DeadFish[]
+  /** Bones left when a carnivore eats live prey; sink and expire after two days. */
+  skeletons: FishSkeleton[]
   food: Food[]
 }
 

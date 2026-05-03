@@ -8,14 +8,18 @@ import {
 import { removeExpiredFood } from './mechanics/foodLifetime'
 import { applySocialSteering } from './mechanics/movementSocial'
 import { resolveCarnivorePredation } from './mechanics/predation'
+import { sinkAndPruneSkeletons } from './mechanics/skeletonPhysics'
+import type { SimulationEvent } from './events'
 import type { Params } from './params'
 import type { State } from './types'
+
+export type UpdateResult = { state: State; events: readonly SimulationEvent[] }
 
 /**
  * Single entry for the simulation step. Mechanics are applied in order;
  * each stage returns immutable state.
  */
-export function update(state: State, params: Params, deltaMs: number): State {
+export function update(state: State, params: Params, deltaMs: number): UpdateResult {
   const clampedDelta = Math.min(Math.max(deltaMs, 0), 250)
   const dayAdvance = clampedDelta / params.dayLengthMs
 
@@ -23,15 +27,28 @@ export function update(state: State, params: Params, deltaMs: number): State {
     ...state,
     currentDay: state.currentDay + dayAdvance,
   }
+  const events: SimulationEvent[] = []
 
   next = removeExpiredFood(next, params)
   next = applyFlakeSeekVelocities(next, params, clampedDelta)
   next = applySocialSteering(next, params, clampedDelta)
   next = integrateFishPositions(next, params, clampedDelta)
-  next = resolveFlakeEating(next)
-  next = resolveCarnivorePredation(next)
-  next = runCalendarBoundaries(next, params)
+
+  const flake = resolveFlakeEating(next)
+  next = flake.state
+  events.push(...flake.events)
+
+  const pred = resolveCarnivorePredation(next)
+  next = pred.state
+  events.push(...pred.events)
+
+  next = sinkAndPruneSkeletons(next, params, clampedDelta)
+
+  const cal = runCalendarBoundaries(next, params)
+  next = cal.state
+  events.push(...cal.events)
+
   next = sinkAndPruneDead(next, params, clampedDelta)
 
-  return next
+  return { state: next, events }
 }

@@ -71,7 +71,7 @@ export function DebugControlsSection({ params, setParams }: Props) {
 
       <label className="block text-xs text-slate-400">
         <span className="mb-1 block text-slate-500">
-          Carnivore mutation (per fish / day)
+          Carnivore chance (per baby)
         </span>
         <input
           type="range"
