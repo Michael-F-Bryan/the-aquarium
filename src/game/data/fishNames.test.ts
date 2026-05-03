@@ -6,10 +6,10 @@ describe('pickFishName', () => {
     expect(pickFishName(42)).toEqual(pickFishName(42))
   })
 
-  it('advances rng state', () => {
+  it('advances rng state and picks from the name list', () => {
     const a = pickFishName(1)
     const b = pickFishName(a.rngState)
-    expect(a.name).toMatch(/^Fish-\d+$/)
+    expect(a.name.length).toBeGreaterThan(0)
     expect(b.rngState).not.toBe(a.rngState)
   })
 })

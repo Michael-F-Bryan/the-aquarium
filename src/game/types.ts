@@ -37,6 +37,18 @@ export type Food = {
 
 export type Species = 'normal' | 'carnivore'
 
+export type FishGender = 'female' | 'male' | 'other'
+
+export type FishAppearance = {
+  gender: FishGender
+  eyelashes: boolean
+  finScale: number
+  finShape: 0 | 1 | 2
+  tailShape: 0 | 1 | 2
+  /** CSS hex colour for the eye highlight. */
+  eyeColor: string
+}
+
 export type Fish = {
   id: string
   name: string
@@ -45,6 +57,7 @@ export type Fish = {
   weightG: number
   health: 0 | 1 | 2 | 3
   physics: Physics
+  appearance: FishAppearance
   /**
    * Fractional `currentDay` when this fish last consumed food (flake or prey).
    * Use `NEVER_ATE` (-1) if never fed.

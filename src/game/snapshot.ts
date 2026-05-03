@@ -1,9 +1,9 @@
-import type { State } from './types'
+import type { FishAppearance, FishGender, State } from './types'
 
 /** Bump when persisted `State` shape changes (save/load, dev JSON). */
-export const GAME_SNAPSHOT_SCHEMA_VERSION = 2 as const
+export const GAME_SNAPSHOT_SCHEMA_VERSION = 3 as const
 
-export type GameSnapshotV2 = {
+export type GameSnapshotV3 = {
   schemaVersion: typeof GAME_SNAPSHOT_SCHEMA_VERSION
   state: State
 }
@@ -47,6 +47,30 @@ function physics(x: unknown, label: string): State['liveFish'][0]['physics'] {
   }
 }
 
+function parseGender(x: unknown, label: string): FishGender {
+  const g = str(x, label)
+  if (g !== 'female' && g !== 'male' && g !== 'other') {
+    throw new Error(`${label} must be female, male, or other`)
+  }
+  return g
+}
+
+function parseAppearance(x: unknown, label: string): FishAppearance {
+  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  const finShape = int(x.finShape, `${label}.finShape`)
+  const tailShape = int(x.tailShape, `${label}.tailShape`)
+  if (finShape < 0 || finShape > 2) throw new Error(`${label}.finShape must be 0–2`)
+  if (tailShape < 0 || tailShape > 2) throw new Error(`${label}.tailShape must be 0–2`)
+  return {
+    gender: parseGender(x.gender, `${label}.gender`),
+    eyelashes: Boolean(x.eyelashes),
+    finScale: num(x.finScale, `${label}.finScale`),
+    finShape: finShape as 0 | 1 | 2,
+    tailShape: tailShape as 0 | 1 | 2,
+    eyeColor: str(x.eyeColor, `${label}.eyeColor`),
+  }
+}
+
 function fish(x: unknown, label: string): State['liveFish'][0] {
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   const species = str(x.species, `${label}.species`)
@@ -63,6 +87,7 @@ function fish(x: unknown, label: string): State['liveFish'][0] {
     weightG: num(x.weightG, `${label}.weightG`),
     health: health as 0 | 1 | 2 | 3,
     physics: physics(x.physics, `${label}.physics`),
+    appearance: parseAppearance(x.appearance, `${label}.appearance`),
     lastAte: num(x.lastAte, `${label}.lastAte`),
   }
 }
@@ -144,7 +169,7 @@ export function parseGameSnapshot(json: unknown): ParseSnapshotResult {
 }
 
 export function serializeGameSnapshot(state: State): string {
-  const payload: GameSnapshotV2 = {
+  const payload: GameSnapshotV3 = {
     schemaVersion: GAME_SNAPSHOT_SCHEMA_VERSION,
     state,
   }

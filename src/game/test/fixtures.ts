@@ -1,6 +1,6 @@
 import { NEVER_ATE } from '../satiation'
 import { defaultParams, type Params } from '../params'
-import type { Fish, State } from '../types'
+import type { Fish, FishAppearance, State } from '../types'
 
 export const testParams = (over: Partial<Params> = {}): Params => ({
   ...defaultParams,
@@ -9,20 +9,41 @@ export const testParams = (over: Partial<Params> = {}): Params => ({
   ...over,
 })
 
-export const minimalFish = (over: Partial<Fish> = {}): Fish => ({
-  id: 'fish-test',
-  name: 'Test',
-  species: 'normal',
-  ageDays: 10,
-  weightG: 100,
-  health: 3,
-  lastAte: NEVER_ATE,
-  physics: {
-    position: { x: 100, y: 100 },
-    velocity: { x: 0, y: 0 },
-  },
-  ...over,
-})
+export const defaultTestAppearance: FishAppearance = {
+  gender: 'other',
+  eyelashes: false,
+  finScale: 1,
+  finShape: 0,
+  tailShape: 0,
+  eyeColor: '#38bdf8',
+}
+
+/** Fish for tests; supplies neutral appearance unless overridden. */
+export function makeTestFish(over: Partial<Fish> = {}): Fish {
+  const base: Fish = {
+    id: 'fish-test',
+    name: 'Test',
+    species: 'normal',
+    ageDays: 10,
+    weightG: 100,
+    health: 3,
+    lastAte: NEVER_ATE,
+    appearance: defaultTestAppearance,
+    physics: {
+      position: { x: 100, y: 100 },
+      velocity: { x: 0, y: 0 },
+    },
+  }
+  return {
+    ...base,
+    ...over,
+    appearance: over.appearance ?? base.appearance,
+    physics: over.physics ?? base.physics,
+  }
+}
+
+/** @deprecated use makeTestFish */
+export const minimalFish = makeTestFish
 
 export const minimalState = (over: Partial<State> = {}): State => ({
   currentDay: 0,

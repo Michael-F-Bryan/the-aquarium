@@ -4,13 +4,13 @@ import {
   parseGameSnapshot,
   serializeGameSnapshot,
 } from './snapshot'
-import { minimalFish, minimalState } from './test/fixtures'
+import { makeTestFish, minimalState } from './test/fixtures'
 
 describe('parseGameSnapshot', () => {
   it('round-trips valid state', () => {
     const state = minimalState({
       currentDay: 1.5,
-      liveFish: [minimalFish({ id: 'fish-0', name: 'Fin' })],
+      liveFish: [makeTestFish({ id: 'fish-0', name: 'Fin' })],
     })
     const json = JSON.parse(serializeGameSnapshot(state)) as unknown
     const r = parseGameSnapshot(json)

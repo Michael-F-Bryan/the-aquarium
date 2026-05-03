@@ -1,10 +1,11 @@
+import { rollAppearance } from '../appearance'
 import { MIDNIGHT_MEAL_WINDOW_DAYS } from '../constants'
 import { pickFishName } from '../data/fishNames'
 import type { SimulationEvent } from '../events'
 import { rngNext01 } from '../rng'
 import { NEVER_ATE, ateWithinWindowBeforeCalendarClose } from '../satiation'
 import type { Params } from '../params'
-import type { DeadFish, Fish, Species, State } from '../types'
+import type { DeadFish, Fish, FishAppearance, Species, State } from '../types'
 
 type Health = 0 | 1 | 2 | 3
 
@@ -34,6 +35,7 @@ function spawnBaby(
   jitterY: number,
   species: Species,
   name: string,
+  appearance: FishAppearance,
 ): Fish {
   return {
     id,
@@ -43,6 +45,7 @@ function spawnBaby(
     weightG: 100,
     health: 3,
     lastAte: NEVER_ATE,
+    appearance,
     physics: {
       position: {
         x: parent.physics.position.x + jitterX,
@@ -111,9 +114,11 @@ function closeOneCalendarDay(
       nextId += 1
       const namePick = pickFishName(rngState)
       rngState = namePick.rngState
+      const app = rollAppearance(rngState)
+      rngState = app.rngState
       const species: Species =
         roll() < params.carnivoreMutationChance ? 'carnivore' : 'normal'
-      const baby = spawnBaby(fish, id, jx, jy, species, namePick.name)
+      const baby = spawnBaby(fish, id, jx, jy, species, namePick.name, app.appearance)
       born.push(baby)
       events.push({
         type: 'fish_born',
