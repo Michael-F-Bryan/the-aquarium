@@ -3,14 +3,23 @@ export type Vec3 = { x: number; y: number; z: number };
 
 export type FishSpeciesTag = { kind: "herbivore" } | { kind: "carnivore" };
 
-/** Hunger vitals label; first milestone only (`#7`) — later milestones extend this union. */
-export type FishHungerStage = "healthy" | "hungry";
+/** Hunger vitals label; milestones extend per `docs/the-game.md` (`#7`, `#8`, …). */
+export type FishHungerStage = "healthy" | "hungry" | "starving";
 
 /** Emitted once when a fish crosses the first hunger threshold (healthy → hungry). */
 export type FishBecameHungryEvent = {
   kind: "fish_became_hungry";
   displayName: string;
 };
+
+/** Emitted once when a fish crosses the second hunger threshold (hungry → starving). */
+export type FishBecameStarvingEvent = {
+  kind: "fish_became_starving";
+  displayName: string;
+};
+
+/** Toasts / UI: one entry per hunger milestone crossing in a single hunger step. */
+export type FishHungerMilestoneEvent = FishBecameHungryEvent | FishBecameStarvingEvent;
 
 /**
  * Fish-only simulation fields (movement uses shared `position` / `velocity`).

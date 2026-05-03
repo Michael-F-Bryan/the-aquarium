@@ -1,25 +1,27 @@
 import type { World } from "miniplex";
-import { FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS } from "./hungerConstants";
+import {
+  FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+  SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+} from "./hungerConstants";
 import { wallDeltaToSimDays } from "./simulationClock";
-import type { FishBecameHungryEvent, FishState, SimulationEntity } from "./types";
+import type { FishHungerMilestoneEvent, FishState, SimulationEntity } from "./types";
 import { fishWithKinematics } from "./world";
 
 /**
- * Vitals-adjacent clock: advances each fish's `hungerDays` by the same in-game day
- * delta the simulation clock uses for this wall step (`wallDeltaToSimDays`).
- *
- * When a fish first crosses {@link FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS} while still
- * `healthy`, health drops 3→2, `hungerStage` becomes `"hungry"`, and one event is returned.
+ * Advances each fish's `hungerDays` by `dSim` in-game days and applies hunger
+ * milestones in order (healthy→hungry at 1.5d, hungry→starving at 3d per
+ * `docs/the-game.md`). Each crossing fires at most once, in deterministic order
+ * per fish.
  */
-export function stepHungerTimersWallDelta(
+export function stepHungerTimersSimDayDelta(
   world: World<SimulationEntity>,
-  options: { wallDeltaSeconds: number },
-): readonly FishBecameHungryEvent[] {
-  const dSim = wallDeltaToSimDays(options.wallDeltaSeconds);
+  dSim: number,
+): readonly FishHungerMilestoneEvent[] {
   if (dSim <= 0) return [];
 
-  const events: FishBecameHungryEvent[] = [];
-  const threshold = FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS;
+  const events: FishHungerMilestoneEvent[] = [];
+  const firstThreshold = FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS;
+  const secondThreshold = SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS;
 
   for (const entity of fishWithKinematics(world)) {
     const fish = entity.fish;
@@ -28,8 +30,8 @@ export function stepHungerTimersWallDelta(
     const after = fish.hungerDays;
 
     if (
-      before < threshold &&
-      after >= threshold &&
+      before < firstThreshold &&
+      after >= firstThreshold &&
       fish.hungerStage === "healthy" &&
       fish.health === 3
     ) {
@@ -37,9 +39,31 @@ export function stepHungerTimersWallDelta(
       fish.hungerStage = "hungry";
       events.push({ kind: "fish_became_hungry", displayName: fish.displayName });
     }
+
+    if (
+      before < secondThreshold &&
+      after >= secondThreshold &&
+      fish.hungerStage === "hungry" &&
+      fish.health === 2
+    ) {
+      fish.health = 1;
+      fish.hungerStage = "starving";
+      events.push({ kind: "fish_became_starving", displayName: fish.displayName });
+    }
   }
 
   return events;
+}
+
+/**
+ * Vitals-adjacent clock: advances each fish's `hungerDays` by the same in-game day
+ * delta the simulation clock uses for this wall step (`wallDeltaToSimDays`).
+ */
+export function stepHungerTimersWallDelta(
+  world: World<SimulationEntity>,
+  options: { wallDeltaSeconds: number },
+): readonly FishHungerMilestoneEvent[] {
+  return stepHungerTimersSimDayDelta(world, wallDeltaToSimDays(options.wallDeltaSeconds));
 }
 
 /** Invoked by interaction systems when a fish successfully eats (food or prey). */

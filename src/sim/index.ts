@@ -1,6 +1,8 @@
 export type {
   FishBecameHungryEvent,
+  FishBecameStarvingEvent,
   FishEntity,
+  FishHungerMilestoneEvent,
   FishHungerStage,
   FishSpeciesTag,
   FishState,
@@ -42,8 +44,14 @@ export {
 export type { SimulationClockState } from "./simulationClock";
 export { stepFishKinematicsWallDelta } from "./movement/fishKinematics";
 export type { StepFishKinematicsOptions } from "./movement/fishKinematics";
-export { FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS } from "./hungerConstants";
-export { dispatchFishBecameHungryEvents, subscribeFishBecameHungryEvents } from "./fishHungerEventBridge";
+export {
+  FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+  SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+} from "./hungerConstants";
+export {
+  dispatchFishHungerMilestoneEvents,
+  subscribeFishHungerMilestoneEvents,
+} from "./fishHungerEventBridge";
 export { resetFishHungerAfterSuccessfulMeal, stepHungerTimersWallDelta } from "./hungerTimer";
 export {
   SIMULATION_WORLD_SNAPSHOT_VERSION,

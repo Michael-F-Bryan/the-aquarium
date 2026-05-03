@@ -1,13 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { dispatchFishBecameHungryEvents, subscribeFishBecameHungryEvents } from "./fishHungerEventBridge";
-import { FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS } from "./hungerConstants";
+import {
+  dispatchFishHungerMilestoneEvents,
+  subscribeFishHungerMilestoneEvents,
+} from "./fishHungerEventBridge";
+import {
+  FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+  SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+} from "./hungerConstants";
 import {
   createSimulationWorld,
   fishWithKinematics,
   registerFish,
   wallDeltaToSimDays,
 } from "./index";
-import { resetFishHungerAfterSuccessfulMeal, stepHungerTimersWallDelta } from "./hungerTimer";
+import {
+  resetFishHungerAfterSuccessfulMeal,
+  stepHungerTimersSimDayDelta,
+  stepHungerTimersWallDelta,
+} from "./hungerTimer";
 
 describe("stepHungerTimersWallDelta", () => {
   it("advances hungerDays by the same sim-day delta as the simulation clock for that wall step", () => {
@@ -111,6 +121,30 @@ describe("stepHungerTimersWallDelta", () => {
     expect(fish!.fish.hungerStage).toBe("hungry");
   });
 
+  it("at the second threshold applies health 2→1, hungerStage starving, exactly once per crossing", () => {
+    const world = createSimulationWorld();
+    const startBelow = SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS - 0.01;
+    registerFish(world, {
+      fish: {
+        displayName: "Starver",
+        hungerDays: startBelow,
+        health: 2,
+        hungerStage: "hungry",
+        weightGrams: 100,
+        species: { kind: "herbivore" },
+      },
+      position: { x: 0, y: 0.35, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+    });
+    const wallDt = 0.065;
+    const ev = stepHungerTimersWallDelta(world, { wallDeltaSeconds: wallDt });
+    const [fish] = [...fishWithKinematics(world)];
+    expect(fish!.fish.health).toBe(1);
+    expect(fish!.fish.hungerStage).toBe("starving");
+    expect(ev).toEqual([{ kind: "fish_became_starving", displayName: "Starver" }]);
+    expect(stepHungerTimersWallDelta(world, { wallDeltaSeconds: wallDt })).toEqual([]);
+  });
+
   it("delivers one event per crossing to a subscribed test double", () => {
     const world = createSimulationWorld();
     registerFish(world, {
@@ -126,13 +160,13 @@ describe("stepHungerTimersWallDelta", () => {
       velocity: { x: 0, y: 0, z: 0 },
     });
     const batches: { kind: string; displayName: string }[][] = [];
-    const unsub = subscribeFishBecameHungryEvents((events) => {
+    const unsub = subscribeFishHungerMilestoneEvents((events) => {
       batches.push([...events]);
     });
     try {
       const wallDt = 0.001;
-      dispatchFishBecameHungryEvents(stepHungerTimersWallDelta(world, { wallDeltaSeconds: wallDt }));
-      dispatchFishBecameHungryEvents(stepHungerTimersWallDelta(world, { wallDeltaSeconds: wallDt }));
+      dispatchFishHungerMilestoneEvents(stepHungerTimersWallDelta(world, { wallDeltaSeconds: wallDt }));
+      dispatchFishHungerMilestoneEvents(stepHungerTimersWallDelta(world, { wallDeltaSeconds: wallDt }));
       expect(batches).toHaveLength(1);
       expect(batches[0]).toEqual([{ kind: "fish_became_hungry", displayName: "Toasty" }]);
     } finally {
@@ -140,7 +174,7 @@ describe("stepHungerTimersWallDelta", () => {
     }
   });
 
-  it("emits one event per fish when two cross the threshold in the same step", () => {
+  it("emits one event per fish when two cross the first threshold in the same step", () => {
     const world = createSimulationWorld();
     const edge = FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS - 0.01;
     for (const name of ["One", "Two"] as const) {
@@ -163,13 +197,54 @@ describe("stepHungerTimersWallDelta", () => {
   });
 });
 
+describe("stepHungerTimersSimDayDelta", () => {
+  it("fires hungry then starving in one step when both thresholds are crossed", () => {
+    const world = createSimulationWorld();
+    registerFish(world, {
+      fish: {
+        displayName: "Leap",
+        hungerDays: 1.0,
+        health: 3,
+        hungerStage: "healthy",
+        weightGrams: 100,
+        species: { kind: "herbivore" },
+      },
+      position: { x: 0, y: 0.35, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+    });
+    const ev = stepHungerTimersSimDayDelta(world, 2.1);
+    const [fish] = [...fishWithKinematics(world)];
+    expect(fish!.fish.hungerDays).toBeCloseTo(3.1, 10);
+    expect(fish!.fish.health).toBe(1);
+    expect(fish!.fish.hungerStage).toBe("starving");
+    expect(ev).toEqual([
+      { kind: "fish_became_hungry", displayName: "Leap" },
+      { kind: "fish_became_starving", displayName: "Leap" },
+    ]);
+  });
+});
+
 describe("resetFishHungerAfterSuccessfulMeal", () => {
-  it("sets hungerDays to zero and hungerStage to healthy", () => {
+  it("sets hungerDays to zero and hungerStage to healthy from hungry", () => {
     const fish = {
       displayName: "A",
       hungerDays: 3.7,
       health: 2 as const,
       hungerStage: "hungry" as const,
+      weightGrams: 100,
+      species: { kind: "herbivore" as const },
+    };
+    resetFishHungerAfterSuccessfulMeal(fish);
+    expect(fish.hungerDays).toBe(0);
+    expect(fish.hungerStage).toBe("healthy");
+  });
+
+  it("sets hungerDays to zero and hungerStage to healthy from starving", () => {
+    const fish = {
+      displayName: "B",
+      hungerDays: 4.2,
+      health: 1 as const,
+      hungerStage: "starving" as const,
       weightGrams: 100,
       species: { kind: "herbivore" as const },
     };
