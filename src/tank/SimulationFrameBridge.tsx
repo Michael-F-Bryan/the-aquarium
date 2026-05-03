@@ -5,6 +5,7 @@ import {
   clampWallDeltaSeconds,
   dispatchFishAteFoodEvents,
   dispatchFishHungerMilestoneEvents,
+  stepExpireFoodByAge,
   stepFishKinematicsWallDelta,
   stepHerbivoreEatNearbyFood,
   stepHungerTimersWallDelta,
@@ -22,6 +23,7 @@ export function SimulationFrameBridge() {
   useFrame((_, delta) => {
     if (paused) return;
     const dt = clampWallDeltaSeconds(delta);
+    stepExpireFoodByAge(world, { simDays });
     updateHerbivoreNearestFoodTargets(world);
     stepFishKinematicsWallDelta(world, { wallDeltaSeconds: dt, simTimeDays: simDays });
     const eatEvents = stepHerbivoreEatNearbyFood(world, { paused });
