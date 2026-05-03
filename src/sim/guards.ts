@@ -1,4 +1,7 @@
-import { FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS } from "./hungerConstants";
+import {
+  FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+  SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+} from "./hungerConstants";
 import type {
   FishEntity,
   FishHungerStage,
@@ -83,10 +86,10 @@ function collectFishState(path: string, v: unknown): { state: FishState } | { er
   }
   const stageRaw = v.hungerStage;
   let hungerStage: FishHungerStage | undefined;
-  if (stageRaw === "healthy" || stageRaw === "hungry") {
+  if (stageRaw === "healthy" || stageRaw === "hungry" || stageRaw === "starving") {
     hungerStage = stageRaw;
   } else if (stageRaw !== undefined) {
-    errors.push(`${path}.hungerStage must be "healthy" or "hungry"`);
+    errors.push(`${path}.hungerStage must be "healthy", "hungry", or "starving"`);
   }
   if (errors.length > 0) {
     return { errors };
@@ -98,10 +101,15 @@ function collectFishState(path: string, v: unknown): { state: FishState } | { er
     if (resolvedHealth === 3 && hungerDays >= FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS) {
       resolvedHealth = 2;
       hungerStage = "hungry";
+    } else if (resolvedHealth === 2 && hungerDays >= SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS) {
+      resolvedHealth = 1;
+      hungerStage = "starving";
     } else if (resolvedHealth === 3) {
       hungerStage = "healthy";
-    } else {
+    } else if (resolvedHealth === 2) {
       hungerStage = "hungry";
+    } else {
+      hungerStage = "starving";
     }
   }
 

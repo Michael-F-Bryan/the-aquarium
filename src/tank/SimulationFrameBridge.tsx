@@ -3,7 +3,7 @@ import { useSimulationClock } from "../game/simulationClockContext";
 import { useSimulationWorld } from "../game/simulationWorldContext";
 import {
   clampWallDeltaSeconds,
-  dispatchFishBecameHungryEvents,
+  dispatchFishHungerMilestoneEvents,
   stepFishKinematicsWallDelta,
   stepHungerTimersWallDelta,
 } from "../sim";
@@ -21,7 +21,7 @@ export function SimulationFrameBridge() {
     const dt = clampWallDeltaSeconds(delta);
     stepFishKinematicsWallDelta(world, { wallDeltaSeconds: dt, simTimeDays: simDays });
     const hungerEvents = stepHungerTimersWallDelta(world, { wallDeltaSeconds: dt });
-    dispatchFishBecameHungryEvents(hungerEvents);
+    dispatchFishHungerMilestoneEvents(hungerEvents);
     advanceByWallDelta(dt);
   });
   return null;

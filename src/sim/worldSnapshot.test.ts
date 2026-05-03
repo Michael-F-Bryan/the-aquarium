@@ -106,6 +106,30 @@ describe("simulation world snapshot hooks", () => {
     expect(f!.fish.hungerDays).toBe(2);
   });
 
+  it("deserializes v1 without hungerStage inferring starving when past second threshold", () => {
+    const legacy = {
+      version: SIMULATION_WORLD_SNAPSHOT_VERSION_V1,
+      entities: [
+        {
+          fish: {
+            displayName: "LegacyStarve",
+            hungerDays: 3.5,
+            health: 2,
+            weightGrams: 100,
+            species: { kind: "herbivore" },
+          },
+          position: { x: 0, y: 0.35, z: 0 },
+          velocity: { x: 0, y: 0, z: 0 },
+        },
+      ],
+    };
+    const world = deserializeSimulationWorldSnapshot(legacy);
+    const [f] = [...fishWithKinematics(world)];
+    expect(f!.fish.health).toBe(1);
+    expect(f!.fish.hungerStage).toBe("starving");
+    expect(f!.fish.hungerDays).toBe(3.5);
+  });
+
   it("round-trips optional movementTargetPosition on fish", () => {
     const world = createSimulationWorld();
     const base = assertFishEntityShape({
