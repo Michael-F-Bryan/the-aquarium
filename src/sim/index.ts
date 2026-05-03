@@ -54,6 +54,7 @@ export {
   HERBIVORE_FOOD_EAT_DISTANCE,
   stepHerbivoreEatNearbyFood,
 } from "./interactions/herbivoreEatNearbyFood";
+export { DEFAULT_FOOD_LIFETIME_SIM_DAYS, stepExpireFoodByAge } from "./foodExpiry";
 export {
   dispatchFishAteFoodEvents,
   subscribeFishAteFoodEvents,
