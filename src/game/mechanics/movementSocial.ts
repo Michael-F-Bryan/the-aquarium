@@ -10,6 +10,7 @@ import {
   WANDER_STRENGTH,
 } from '../constants'
 import { rngNext01 } from '../rng'
+import { fishWantsFood } from '../satiation'
 import type { Params } from '../params'
 import type { Fish, State } from '../types'
 import { dist, vecAdd, vecNorm, vecScale, vecSub } from '../vec2'
@@ -75,15 +76,18 @@ export function applySocialSteering(
     let ay = 0
 
     if (fish.species === 'carnivore') {
+      const wantsFood = fishWantsFood(fish, state.currentDay)
       let prey: Fish | null = null
       let bestD = Number.POSITIVE_INFINITY
-      for (const o of state.liveFish) {
-        if (o.id === fish.id || o.health === 0) continue
-        if (o.weightG >= fish.weightG) continue
-        const d = dist(fish.physics.position, o.physics.position)
-        if (d < HUNT_PERCEPTION && d < bestD) {
-          bestD = d
-          prey = o
+      if (wantsFood) {
+        for (const o of state.liveFish) {
+          if (o.id === fish.id || o.health === 0) continue
+          if (o.weightG >= fish.weightG) continue
+          const d = dist(fish.physics.position, o.physics.position)
+          if (d < HUNT_PERCEPTION && d < bestD) {
+            bestD = d
+            prey = o
+          }
         }
       }
       if (prey) {
@@ -112,7 +116,7 @@ export function applySocialSteering(
         const away = vecNorm(vecSub(fish.physics.position, threat.physics.position))
         ax += away.x * STEER_ACCEL * 1.4
         ay += away.y * STEER_ACCEL * 1.4
-      } else {
+      } else if (!fishWantsFood(fish, state.currentDay)) {
         const b = boidsAcceleration(fish, normals)
         ax += b.x
         ay += b.y
