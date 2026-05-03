@@ -90,6 +90,7 @@ export const AquariumCanvas = forwardRef<HTMLCanvasElement, Props>(
           ctx.stroke()
         }
 
+        drawTankDecorations(ctx, w, h)
         render(ctx, state, fishSprites)
       }
 
@@ -124,6 +125,102 @@ export const AquariumCanvas = forwardRef<HTMLCanvasElement, Props>(
 
 const FOOD_RADIUS = 5
 
+function drawTankDecorations(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
+  const floorH = Math.max(32, h * 0.14)
+  const g = ctx.createLinearGradient(0, h - floorH, 0, h)
+  g.addColorStop(0, 'rgba(30, 41, 59, 0.25)')
+  g.addColorStop(0.6, 'rgba(51, 65, 85, 0.55)')
+  g.addColorStop(1, 'rgba(15, 23, 42, 0.85)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, h - floorH, w, floorH)
+
+  for (let i = 0; i < 55; i++) {
+    const px = ((i * 7919) % Math.max(1, w - 8)) + 4
+    const py = h - floorH + ((i * 503) % Math.max(1, floorH - 4)) + 2
+    ctx.fillStyle = `rgba(148, 163, 184, ${0.06 + (i % 7) * 0.025})`
+    ctx.beginPath()
+    ctx.ellipse(px, py, 2 + (i % 4), 1.1, (i % 5) * 0.35, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  const rocks: { cx: number; rx: number; ry: number; rot: number }[] = [
+    { cx: w * 0.14, rx: 26, ry: 14, rot: 0.2 },
+    { cx: w * 0.82, rx: 34, ry: 16, rot: -0.15 },
+    { cx: w * 0.48, rx: 22, ry: 11, rot: 0.05 },
+  ]
+  for (const r of rocks) {
+    ctx.save()
+    ctx.translate(r.cx, h - floorH * 0.55)
+    ctx.rotate(r.rot)
+    const rg = ctx.createRadialGradient(0, 0, 2, 0, 0, r.rx)
+    rg.addColorStop(0, 'rgba(100, 116, 139, 0.55)')
+    rg.addColorStop(1, 'rgba(51, 65, 85, 0.35)')
+    ctx.fillStyle = rg
+    ctx.beginPath()
+    ctx.ellipse(0, 0, r.rx, r.ry, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+
+  const baseY = h - floorH + 4
+  const stems = [0.1, 0.28, 0.44, 0.58, 0.74, 0.9]
+  for (const f of stems) {
+    const sx = w * f
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.28)'
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(sx, baseY)
+    ctx.quadraticCurveTo(sx - 18, baseY - 70, sx - 4, baseY - 130)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(sx, baseY)
+    ctx.quadraticCurveTo(sx + 22, baseY - 65, sx + 6, baseY - 110)
+    ctx.stroke()
+  }
+
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.04)'
+  ctx.beginPath()
+  ctx.ellipse(w * 0.2, h * 0.25, w * 0.35, h * 0.12, 0.1, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.ellipse(w * 0.75, h * 0.35, w * 0.22, h * 0.09, -0.2, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawSkeletons(ctx: CanvasRenderingContext2D, state: State): void {
+  for (const sk of state.skeletons) {
+    const { x, y } = sk.physics.position
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(0.15)
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.55)'
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.35)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.moveTo(-18, 0)
+    ctx.lineTo(18, 0)
+    ctx.stroke()
+    for (const vx of [-12, -4, 4, 12]) {
+      ctx.beginPath()
+      ctx.moveTo(vx, 0)
+      ctx.lineTo(vx - 2, -8)
+      ctx.lineTo(vx + 2, -8)
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+    }
+    ctx.font = '9px system-ui, sans-serif'
+    ctx.fillStyle = 'rgba(226, 232, 240, 0.5)'
+    ctx.textAlign = 'center'
+    ctx.fillText(sk.preyName, 0, 12)
+    ctx.restore()
+  }
+}
+
 function render(
   ctx: CanvasRenderingContext2D,
   state: State,
@@ -152,6 +249,8 @@ function render(
 
     ctx.restore()
   })
+
+  drawSkeletons(ctx, state)
 
   deadFish.forEach((fish) => {
     if (atlas) drawDeadFishOnCanvas(ctx, fish, atlas)
