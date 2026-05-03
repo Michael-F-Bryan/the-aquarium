@@ -48,4 +48,15 @@ describe("App shell", () => {
     fireEvent.click(screen.getByRole("button", { name: /resume simulation/i }));
     expect(screen.queryByRole("status", { name: /simulation paused/i })).toBeNull();
   });
+
+  it("toggles pause when pressing Escape", () => {
+    render(<App />);
+    expect(screen.queryByRole("status", { name: /simulation paused/i })).toBeNull();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.getByRole("status", { name: /simulation paused/i })).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("status", { name: /simulation paused/i })).toBeNull();
+  });
 });

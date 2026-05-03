@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RunSnapshotPersistenceEffect } from "./game/RunSnapshotPersistenceEffect";
 import { SimulationClockProvider } from "./game/SimulationClockProvider";
 import { SimulationWorldProvider } from "./game/SimulationWorldProvider";
@@ -11,6 +11,20 @@ import { ToastLogShell } from "./ui/ToastLogShell";
 
 function GameShell() {
   const { paused, togglePause } = useSimulationClock();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        togglePause();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [togglePause]);
+
   return (
     <div className="relative flex h-dvh w-full flex-col overflow-hidden">
       <div className="pointer-events-auto absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
