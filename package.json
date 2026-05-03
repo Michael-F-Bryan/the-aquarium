@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@react-three/fiber": "^9.6.1",
+    "miniplex": "^2.0.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "three": "^0.184.0"
