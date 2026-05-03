@@ -1,4 +1,13 @@
-import type { FishEntity, FishSpeciesTag, FishState, FoodEntity, FoodState, Vec3 } from "./types";
+import { FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS } from "./hungerConstants";
+import type {
+  FishEntity,
+  FishHungerStage,
+  FishSpeciesTag,
+  FishState,
+  FoodEntity,
+  FoodState,
+  Vec3,
+} from "./types";
 
 export class InvalidEntityShapeError extends Error {
   readonly issues: readonly string[];
@@ -72,14 +81,36 @@ function collectFishState(path: string, v: unknown): { state: FishState } | { er
   if (!species) {
     errors.push(`${path}.species must be { kind: "herbivore" } or { kind: "carnivore" }`);
   }
+  const stageRaw = v.hungerStage;
+  let hungerStage: FishHungerStage | undefined;
+  if (stageRaw === "healthy" || stageRaw === "hungry") {
+    hungerStage = stageRaw;
+  } else if (stageRaw !== undefined) {
+    errors.push(`${path}.hungerStage must be "healthy" or "hungry"`);
+  }
   if (errors.length > 0) {
     return { errors };
   }
+
+  let resolvedHealth = h as 0 | 1 | 2 | 3;
+  if (hungerStage === undefined) {
+    const hungerDays = v.hungerDays as number;
+    if (resolvedHealth === 3 && hungerDays >= FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS) {
+      resolvedHealth = 2;
+      hungerStage = "hungry";
+    } else if (resolvedHealth === 3) {
+      hungerStage = "healthy";
+    } else {
+      hungerStage = "hungry";
+    }
+  }
+
   return {
     state: {
       displayName: v.displayName as string,
       hungerDays: v.hungerDays as number,
-      health: h as 0 | 1 | 2 | 3,
+      health: resolvedHealth,
+      hungerStage,
       weightGrams: v.weightGrams as number,
       species: species as FishSpeciesTag,
     },
