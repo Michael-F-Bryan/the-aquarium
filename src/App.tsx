@@ -6,6 +6,7 @@ import { useSimulationClock } from "./game/simulationClockContext";
 import { loadRunBootstrapFromLocalStorage } from "./persistence/runSnapshotStorage";
 import { TankScene } from "./tank/TankScene";
 import { DayCounter } from "./ui/DayCounter";
+import { PauseIcon, PlayIcon } from "./ui/hudIcons";
 import { ScorePlaceholder } from "./ui/ScorePlaceholder";
 import { ToastLogShell } from "./ui/ToastLogShell";
 
@@ -33,11 +34,16 @@ function GameShell() {
         <ToastLogShell entries={[]} />
         <button
           type="button"
-          className="rounded-md border border-neutral-600 bg-neutral-900/90 px-3 py-1.5 text-sm font-medium text-neutral-100 shadow-sm backdrop-blur-sm hover:bg-neutral-800"
+          className="inline-flex items-center gap-2 rounded-md border border-neutral-600 bg-neutral-900/90 px-3 py-1.5 text-sm font-medium text-neutral-100 shadow-sm backdrop-blur-sm hover:bg-neutral-800"
           aria-pressed={paused}
           onClick={togglePause}
         >
-          {paused ? "Resume simulation" : "Pause simulation"}
+          {paused ? (
+            <PlayIcon className="h-4 w-4 shrink-0 text-neutral-300" />
+          ) : (
+            <PauseIcon className="h-4 w-4 shrink-0 text-neutral-300" />
+          )}
+          <span>{paused ? "Resume simulation" : "Pause simulation"}</span>
         </button>
         {paused ? (
           <div
