@@ -1,3 +1,5 @@
+import { ListIcon } from "./hudIcons";
+
 export type ToastLogEntry = {
   id: string;
   message: string;
@@ -14,6 +16,12 @@ type ToastLogShellProps = {
 export function ToastLogShell({ entries }: ToastLogShellProps) {
   return (
     <div className="w-full max-w-xs rounded-md border border-neutral-600 bg-neutral-900/90 shadow-sm backdrop-blur-sm">
+      <div className="border-b border-neutral-600/80 px-3 py-2 text-xs font-semibold tracking-wide text-neutral-200">
+        <span className="inline-flex items-center gap-2">
+          <ListIcon className="h-4 w-4 shrink-0 text-neutral-300" />
+          <span>Event log</span>
+        </span>
+      </div>
       <div
         role="log"
         aria-label="Event log"
