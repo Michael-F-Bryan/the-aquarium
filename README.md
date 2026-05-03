@@ -9,6 +9,20 @@ A browser game where you need to keep your fish alive.
 - Production build: `pnpm build` then `pnpm preview` if you want to smoke-test the bundle
 - Checks: `pnpm lint` and `pnpm test`
 
+## GitHub Pages (production build)
+
+The **Deploy Pages** workflow (`.github/workflows/deploy.yml`) publishes `dist/` on every push to `main`. A green **deploy** job means GitHub accepted the Pages artifact (see the run summary on GitHub Actions).
+
+The public project URL is normally **`https://michael-f-bryan.github.io/the-aquarium/`**. GitHub may **301** that to a path under your account’s [user Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#types-of-github-pages-sites) custom domain. If you see a **404** after that redirect, the hostname in the `Location` header (for example `www.michaelfbryan.com`) is not actually serving GitHub Pages for `/the-aquarium/`—often because DNS for that host points at another provider while the `michael-f-bryan.github.io` repository still declares that custom domain in **Settings → Pages**. Align DNS with GitHub’s Pages records, or remove/change that custom domain configuration, then re-run **Deploy Pages**.
+
+Verify the latest **github-pages** deployment with `curl` (requires a token with `repo` scope, e.g. `gh auth login`):
+
+```bash
+curl -sS -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $(gh auth token)" \
+  "https://api.github.com/repos/Michael-F-Bryan/the-aquarium/deployments?environment=github-pages&per_page=1"
+```
+
 ## Game Rules
 
 - You start the game with one baby fish (random name and appearance).

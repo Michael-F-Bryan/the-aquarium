@@ -1,3 +1,6 @@
+# Publishes dist/ to GitHub Pages (workflow source). Repo Settings → Pages must use
+# "GitHub Actions" as the source. If deploy-pages returns 404 on first run, ensure
+# Pages is enabled and re-run after GitHub creates the github-pages environment.
 name: Deploy Pages
 
 on:
