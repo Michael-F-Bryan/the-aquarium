@@ -1,8 +1,70 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
+import { CanvasTexture, LinearFilter } from 'three'
+import { waterBackdropPresentation } from '../../game/render/fishPresentation'
 import type { AquariumSize } from './pointer'
 
 type TankBackdropProps = {
   readonly aquariumSize: AquariumSize
+}
+
+function createWaterTexture(aquariumSize: AquariumSize): CanvasTexture | null {
+  if (typeof document === 'undefined') return null
+
+  const presentation = waterBackdropPresentation(
+    Math.max(2, Math.ceil(aquariumSize.width)),
+    Math.max(2, Math.ceil(aquariumSize.height)),
+  )
+  const canvas = document.createElement('canvas')
+  canvas.width = presentation.width
+  canvas.height = presentation.height
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, presentation.height)
+  gradient.addColorStop(0, presentation.topColor)
+  gradient.addColorStop(0.45, presentation.middleColor)
+  gradient.addColorStop(1, presentation.bottomColor)
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, presentation.width, presentation.height)
+
+  ctx.strokeStyle = presentation.gridColor
+  ctx.lineWidth = 1
+  for (let x = 0.5; x <= presentation.width; x += presentation.gridSize) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, presentation.height)
+    ctx.stroke()
+  }
+  for (let y = 0.5; y <= presentation.height; y += presentation.gridSize) {
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(presentation.width, y)
+    ctx.stroke()
+  }
+
+  const texture = new CanvasTexture(canvas)
+  texture.minFilter = LinearFilter
+  texture.magFilter = LinearFilter
+  texture.needsUpdate = true
+  return texture
+}
+
+function WaterBackdrop({ aquariumSize }: TankBackdropProps) {
+  const texture = useMemo(() => createWaterTexture(aquariumSize), [aquariumSize])
+
+  useEffect(() => {
+    return () => texture?.dispose()
+  }, [texture])
+
+  if (!texture) return null
+
+  return (
+    <mesh position={[0, 0, -20]}>
+      <planeGeometry args={[aquariumSize.width, aquariumSize.height]} />
+      <meshBasicMaterial map={texture} toneMapped={false} depthWrite={false} />
+    </mesh>
+  )
 }
 
 export function TankBackdrop({ aquariumSize }: TankBackdropProps) {
@@ -33,6 +95,8 @@ export function TankBackdrop({ aquariumSize }: TankBackdropProps) {
 
   return (
     <group>
+      <WaterBackdrop aquariumSize={aquariumSize} />
+
       <mesh position={[0, floorY, -8]}>
         <planeGeometry args={[aquariumSize.width, floorHeight]} />
         <meshBasicMaterial

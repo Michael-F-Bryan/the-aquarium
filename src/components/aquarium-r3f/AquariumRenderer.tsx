@@ -115,6 +115,7 @@ export const AquariumRenderer = forwardRef<
       <Canvas
         className="absolute inset-0 block h-full w-full"
         orthographic
+        frameloop="demand"
         camera={{ position: [0, 0, 100], zoom: 1, near: 0.1, far: 200 }}
         dpr={[1, 2]}
         gl={{
