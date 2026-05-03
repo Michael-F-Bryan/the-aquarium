@@ -20,7 +20,7 @@ export function DebugControlsSection({
     'mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-sm text-slate-200'
 
   return (
-    <section className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+    <section className="space-y-3">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">
         Debug
       </h2>

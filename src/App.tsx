@@ -347,10 +347,7 @@ function App() {
       <div className="flex min-h-0 flex-1">
         <LeftPanel
           state={gameState}
-          params={params}
-          setParams={setParams}
           onReplaceGameState={handleReplaceGameState}
-          onApplyReviewPreset={handleApplyReviewPreset}
           autoplayEnabled={autoplayEnabled}
           autoplayIntervalMs={autoplayIntervalMs}
           autoplayLogCount={autoplayLog.length}
@@ -384,6 +381,9 @@ function App() {
         open={paused}
         hasAutosave={hasAutosave}
         autosavePreviewUrl={autosaveThumb}
+        params={params}
+        setParams={setParams}
+        onApplyReviewPreset={handleApplyReviewPreset}
         onResume={handleResume}
         onLoadAutosave={handleLoadAutosave}
         onNewGame={handleNewGame}
