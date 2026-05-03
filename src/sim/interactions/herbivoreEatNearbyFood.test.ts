@@ -44,6 +44,40 @@ describe("stepHerbivoreEatNearbyFood", () => {
     expect(fish.fish.hungerDays).toBe(0);
     expect(fish.fish.hungerStage).toBe("healthy");
     expect((fish as { movementTargetPosition?: unknown }).movementTargetPosition).toBeUndefined();
+    expect(fish.fish.health).toBe(3);
+  });
+
+  it("gains one health per successful eat when below max, capped at 3", () => {
+    const world = createSimulationWorld();
+    const fish = registerFish(world, {
+      ...herbivoreFish,
+      fish: {
+        ...herbivoreFish.fish,
+        health: 1,
+        hungerStage: "starving",
+        hungerDays: 3,
+      },
+    });
+    registerFood(world, { food: { spawnedAtSimDays: 0 }, position: { x: 0, y: 0.35, z: 0 } });
+    stepHerbivoreEatNearbyFood(world, { paused: false });
+    expect(fish.fish.health).toBe(2);
+    expect(fish.fish.hungerDays).toBe(0);
+  });
+
+  it("at health 2, one eat reaches full health without exceeding 3", () => {
+    const world = createSimulationWorld();
+    const fish = registerFish(world, {
+      ...herbivoreFish,
+      fish: {
+        ...herbivoreFish.fish,
+        health: 2,
+        hungerStage: "hungry",
+        hungerDays: 2,
+      },
+    });
+    registerFood(world, { food: { spawnedAtSimDays: 0 }, position: { x: 0, y: 0.35, z: 0 } });
+    stepHerbivoreEatNearbyFood(world, { paused: false });
+    expect(fish.fish.health).toBe(3);
   });
 
   it("fires eat dispatch exactly once per returned event", () => {
