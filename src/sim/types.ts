@@ -3,6 +3,15 @@ export type Vec3 = { x: number; y: number; z: number };
 
 export type FishSpeciesTag = { kind: "herbivore" } | { kind: "carnivore" };
 
+/** Hunger vitals label; first milestone only (`#7`) — later milestones extend this union. */
+export type FishHungerStage = "healthy" | "hungry";
+
+/** Emitted once when a fish crosses the first hunger threshold (healthy → hungry). */
+export type FishBecameHungryEvent = {
+  kind: "fish_became_hungry";
+  displayName: string;
+};
+
 /**
  * Fish-only simulation fields (movement uses shared `position` / `velocity`).
  * Hunger and health align with `docs/the-game.md` (health 0–3, per-fish hunger clock).
@@ -12,6 +21,8 @@ export type FishState = {
   /** Days since last meal; 0 means just ate. */
   hungerDays: number;
   health: 0 | 1 | 2 | 3;
+  /** Player-facing hunger band; updated on threshold crossings (see `docs/the-game.md`). */
+  hungerStage: FishHungerStage;
   weightGrams: number;
   species: FishSpeciesTag;
 };

@@ -16,6 +16,7 @@ const validFishPayload = {
     displayName: "Pebble",
     hungerDays: 0,
     health: 3 as const,
+    hungerStage: "healthy" as const,
     weightGrams: 100,
     species: { kind: "herbivore" as const },
   },

@@ -9,6 +9,8 @@ import {
 } from "./index";
 import type { SimulationEntity } from "./types";
 import {
+  SIMULATION_WORLD_SNAPSHOT_VERSION,
+  SIMULATION_WORLD_SNAPSHOT_VERSION_V1,
   deserializeSimulationWorldSnapshot,
   serializeSimulationWorldSnapshot,
 } from "./worldSnapshot";
@@ -21,6 +23,7 @@ describe("simulation world snapshot hooks", () => {
         displayName: "Hungry",
         hungerDays: 1.25,
         health: 3,
+        hungerStage: "healthy",
         weightGrams: 150,
         species: { kind: "herbivore" },
       },
@@ -32,6 +35,7 @@ describe("simulation world snapshot hooks", () => {
         displayName: "Fed",
         hungerDays: 0,
         health: 3,
+        hungerStage: "healthy",
         weightGrams: 300,
         species: { kind: "carnivore" },
       },
@@ -48,7 +52,9 @@ describe("simulation world snapshot hooks", () => {
 
     const fishByName = new Map([...fishWithKinematics(restored)].map((e) => [e.fish.displayName, e.fish]));
     expect(fishByName.get("Hungry")!.hungerDays).toBeCloseTo(1.25, 10);
+    expect(fishByName.get("Hungry")!.hungerStage).toBe("healthy");
     expect(fishByName.get("Fed")!.hungerDays).toBe(0);
+    expect(fishByName.get("Fed")!.hungerStage).toBe("healthy");
     expect(fishByName.get("Hungry")!.weightGrams).toBe(150);
     expect(fishByName.get("Fed")!.species).toEqual({ kind: "carnivore" });
 
@@ -58,6 +64,48 @@ describe("simulation world snapshot hooks", () => {
     expect(foods[0]!.position.y).toBeCloseTo(0.5, 10);
   });
 
+  it("serializes snapshot format version 2", () => {
+    const world = createSimulationWorld();
+    registerFish(world, {
+      fish: {
+        displayName: "V2",
+        hungerDays: 0,
+        health: 3,
+        hungerStage: "healthy",
+        weightGrams: 100,
+        species: { kind: "herbivore" },
+      },
+      position: { x: 0, y: 0.35, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+    });
+    const snap = serializeSimulationWorldSnapshot(world);
+    expect(snap.version).toBe(SIMULATION_WORLD_SNAPSHOT_VERSION);
+  });
+
+  it("deserializes v1 snapshots without hungerStage using legacy inference", () => {
+    const legacy = {
+      version: SIMULATION_WORLD_SNAPSHOT_VERSION_V1,
+      entities: [
+        {
+          fish: {
+            displayName: "Legacy",
+            hungerDays: 2,
+            health: 3,
+            weightGrams: 100,
+            species: { kind: "herbivore" },
+          },
+          position: { x: 0, y: 0.35, z: 0 },
+          velocity: { x: 0, y: 0, z: 0 },
+        },
+      ],
+    };
+    const world = deserializeSimulationWorldSnapshot(legacy);
+    const [f] = [...fishWithKinematics(world)];
+    expect(f!.fish.health).toBe(2);
+    expect(f!.fish.hungerStage).toBe("hungry");
+    expect(f!.fish.hungerDays).toBe(2);
+  });
+
   it("round-trips optional movementTargetPosition on fish", () => {
     const world = createSimulationWorld();
     const base = assertFishEntityShape({
@@ -65,6 +113,7 @@ describe("simulation world snapshot hooks", () => {
         displayName: "Targeted",
         hungerDays: 0.1,
         health: 3,
+        hungerStage: "healthy",
         weightGrams: 100,
         species: { kind: "herbivore" },
       },

@@ -3,10 +3,13 @@ import { InvalidEntityShapeError, assertFishEntityShape, assertFoodEntityShape }
 import type { SimulationEntity, Vec3 } from "./types";
 import { createSimulationWorld } from "./world";
 
-export const SIMULATION_WORLD_SNAPSHOT_VERSION = 1 as const;
+export const SIMULATION_WORLD_SNAPSHOT_VERSION = 2 as const;
+
+/** Legacy snapshots before `FishState.hungerStage` (`#7`). */
+export const SIMULATION_WORLD_SNAPSHOT_VERSION_V1 = 1 as const;
 
 export type SimulationWorldSnapshot = {
-  version: typeof SIMULATION_WORLD_SNAPSHOT_VERSION;
+  version: typeof SIMULATION_WORLD_SNAPSHOT_VERSION | typeof SIMULATION_WORLD_SNAPSHOT_VERSION_V1;
   /** Plain JSON-serializable entity records (fish + food archetypes). */
   entities: unknown[];
 };
@@ -66,7 +69,7 @@ export function deserializeSimulationWorldSnapshot(data: unknown): World<Simulat
   if (!isPlainRecord(data)) {
     throw new InvalidEntityShapeError(["snapshot root must be an object"]);
   }
-  if (data.version !== SIMULATION_WORLD_SNAPSHOT_VERSION) {
+  if (data.version !== SIMULATION_WORLD_SNAPSHOT_VERSION && data.version !== SIMULATION_WORLD_SNAPSHOT_VERSION_V1) {
     throw new InvalidEntityShapeError([`unsupported snapshot version: ${String(data.version)}`]);
   }
   if (!Array.isArray(data.entities)) {
