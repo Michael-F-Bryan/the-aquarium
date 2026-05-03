@@ -79,6 +79,14 @@ function App() {
     [],
   )
 
+  const handleReplaceGameState = useCallback((next: State) => {
+    setGameState(next)
+    setSelectedId((prev) => {
+      if (prev && next.liveFish.some((f) => f.id === prev)) return prev
+      return next.liveFish[0]?.id ?? null
+    })
+  }, [])
+
   return (
     <div className="flex h-dvh min-h-0 flex-col bg-slate-950 text-slate-100">
       <header className="shrink-0 border-b border-slate-800 bg-slate-900/60 px-4 py-3">
@@ -88,7 +96,12 @@ function App() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <LeftPanel state={gameState} params={params} setParams={setParams} />
+        <LeftPanel
+          state={gameState}
+          params={params}
+          setParams={setParams}
+          onReplaceGameState={handleReplaceGameState}
+        />
 
         <main className="relative min-h-0 min-w-0 flex-1 bg-slate-900">
           <AquariumCanvas

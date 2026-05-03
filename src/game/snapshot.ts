@@ -1,0 +1,140 @@
+import type { State } from './types'
+
+/** Bump when persisted `State` shape changes (save/load, dev JSON). */
+export const GAME_SNAPSHOT_SCHEMA_VERSION = 1 as const
+
+export type GameSnapshotV1 = {
+  schemaVersion: typeof GAME_SNAPSHOT_SCHEMA_VERSION
+  state: State
+}
+
+export type ParseSnapshotResult =
+  | { ok: true; state: State }
+  | { ok: false; error: string }
+
+function isRecord(x: unknown): x is Record<string, unknown> {
+  return typeof x === 'object' && x !== null && !Array.isArray(x)
+}
+
+function num(x: unknown, label: string): number {
+  if (typeof x !== 'number' || !Number.isFinite(x)) {
+    throw new Error(`${label} must be a finite number`)
+  }
+  return x
+}
+
+function int(x: unknown, label: string): number {
+  const n = num(x, label)
+  if (!Number.isInteger(n)) throw new Error(`${label} must be an integer`)
+  return n
+}
+
+function str(x: unknown, label: string): string {
+  if (typeof x !== 'string') throw new Error(`${label} must be a string`)
+  return x
+}
+
+function physics(x: unknown, label: string): State['liveFish'][0]['physics'] {
+  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  const position = x.position
+  const velocity = x.velocity
+  if (!isRecord(position) || !isRecord(velocity)) {
+    throw new Error(`${label}.position and ${label}.velocity must be objects`)
+  }
+  return {
+    position: { x: num(position.x, `${label}.position.x`), y: num(position.y, `${label}.position.y`) },
+    velocity: { x: num(velocity.x, `${label}.velocity.x`), y: num(velocity.y, `${label}.velocity.y`) },
+  }
+}
+
+function fish(x: unknown, label: string): State['liveFish'][0] {
+  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  const species = str(x.species, `${label}.species`)
+  if (species !== 'normal' && species !== 'carnivore') {
+    throw new Error(`${label}.species must be normal or carnivore`)
+  }
+  const health = int(x.health, `${label}.health`)
+  if (health < 0 || health > 3) throw new Error(`${label}.health must be 0–3`)
+  return {
+    id: str(x.id, `${label}.id`),
+    name: str(x.name, `${label}.name`),
+    species,
+    ageDays: num(x.ageDays, `${label}.ageDays`),
+    weightG: num(x.weightG, `${label}.weightG`),
+    health: health as 0 | 1 | 2 | 3,
+    physics: physics(x.physics, `${label}.physics`),
+    lastAte: num(x.lastAte, `${label}.lastAte`),
+  }
+}
+
+function deadFish(x: unknown, label: string): State['deadFish'][0] {
+  const f = fish(x, label)
+  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  return {
+    ...f,
+    diedOnDay: int(x.diedOnDay, `${label}.diedOnDay`),
+  }
+}
+
+function foodPiece(x: unknown, label: string): State['food'][0] {
+  if (!isRecord(x)) throw new Error(`${label} must be an object`)
+  return {
+    id: str(x.id, `${label}.id`),
+    createdOnDay: num(x.createdOnDay, `${label}.createdOnDay`),
+    physics: physics(x.physics, `${label}.physics`),
+  }
+}
+
+function parseStateInner(raw: unknown): State {
+  if (!isRecord(raw)) throw new Error('state must be an object')
+  const currentDay = num(raw.currentDay, 'state.currentDay')
+  const lastClosedCalendarDayFloor = int(
+    raw.lastClosedCalendarDayFloor,
+    'state.lastClosedCalendarDayFloor',
+  )
+  const nextEntityId = int(raw.nextEntityId, 'state.nextEntityId')
+  const rngState = int(raw.rngState, 'state.rngState')
+  const score = num(raw.score, 'state.score')
+
+  if (!Array.isArray(raw.liveFish)) throw new Error('state.liveFish must be an array')
+  if (!Array.isArray(raw.deadFish)) throw new Error('state.deadFish must be an array')
+  if (!Array.isArray(raw.food)) throw new Error('state.food must be an array')
+
+  return {
+    currentDay,
+    lastClosedCalendarDayFloor,
+    nextEntityId,
+    rngState,
+    score,
+    liveFish: raw.liveFish.map((f, i) => fish(f, `state.liveFish[${i}]`)),
+    deadFish: raw.deadFish.map((f, i) => deadFish(f, `state.deadFish[${i}]`)),
+    food: raw.food.map((f, i) => foodPiece(f, `state.food[${i}]`)),
+  }
+}
+
+/** Parse dev / save JSON envelope `{ schemaVersion, state }`. */
+export function parseGameSnapshot(json: unknown): ParseSnapshotResult {
+  try {
+    if (!isRecord(json)) return { ok: false, error: 'Root must be an object' }
+    const schemaVersion = json.schemaVersion
+    if (schemaVersion !== GAME_SNAPSHOT_SCHEMA_VERSION) {
+      return {
+        ok: false,
+        error: `Unsupported schemaVersion ${String(schemaVersion)} (expected ${GAME_SNAPSHOT_SCHEMA_VERSION})`,
+      }
+    }
+    const state = parseStateInner(json.state)
+    return { ok: true, state }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, error: msg }
+  }
+}
+
+export function serializeGameSnapshot(state: State): string {
+  const payload: GameSnapshotV1 = {
+    schemaVersion: GAME_SNAPSHOT_SCHEMA_VERSION,
+    state,
+  }
+  return JSON.stringify(payload, null, 2)
+}
