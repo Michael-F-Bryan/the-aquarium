@@ -25,6 +25,12 @@ export {
 } from "./newRunWorld";
 export { STARTER_SPAWN_VOLUME, isWithinStarterSpawnVolume } from "./starterSpawnBounds";
 export {
+  MIN_FOOD_SPACING,
+  clampFoodDropPosition,
+  tryDropFoodAt,
+} from "./dropFood";
+export type { DropFoodRejectReason, DropFoodResult } from "./dropFood";
+export {
   MAX_WALL_DELTA_SECONDS_PER_STEP,
   WALL_SECONDS_PER_SIM_DAY,
   advanceClockByWallDelta,

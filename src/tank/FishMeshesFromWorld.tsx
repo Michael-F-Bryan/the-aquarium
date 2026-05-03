@@ -21,7 +21,7 @@ export function FishMeshesFromWorld() {
   });
 
   return (
-    <mesh ref={meshRef}>
+    <mesh ref={meshRef} raycast={() => {}}>
       <sphereGeometry args={[0.12, 20, 16]} />
       <meshStandardMaterial color="#6eb5d9" roughness={0.45} metalness={0.15} />
     </mesh>
