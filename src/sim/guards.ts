@@ -1,6 +1,7 @@
 import {
   FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
   SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+  THIRD_HUNGER_DEATH_THRESHOLD_DAYS,
 } from "./hungerConstants";
 import type {
   FishEntity,
@@ -91,6 +92,9 @@ function collectFishState(path: string, v: unknown): { state: FishState } | { er
   } else if (stageRaw !== undefined) {
     errors.push(`${path}.hungerStage must be "healthy", "hungry", or "starving"`);
   }
+  if (v.alive !== undefined && typeof v.alive !== "boolean") {
+    errors.push(`${path}.alive must be a boolean`);
+  }
   if (errors.length > 0) {
     return { errors };
   }
@@ -100,11 +104,14 @@ function collectFishState(path: string, v: unknown): { state: FishState } | { er
     const hungerDays = v.hungerDays as number;
     if (resolvedHealth === 3 && hungerDays >= FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS) {
       resolvedHealth = 2;
-      hungerStage = "hungry";
-    } else if (resolvedHealth === 2 && hungerDays >= SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS) {
+    }
+    if (resolvedHealth === 2 && hungerDays >= SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS) {
       resolvedHealth = 1;
-      hungerStage = "starving";
-    } else if (resolvedHealth === 3) {
+    }
+    if (resolvedHealth === 1 && hungerDays >= THIRD_HUNGER_DEATH_THRESHOLD_DAYS) {
+      resolvedHealth = 0;
+    }
+    if (resolvedHealth >= 3) {
       hungerStage = "healthy";
     } else if (resolvedHealth === 2) {
       hungerStage = "hungry";
@@ -113,12 +120,23 @@ function collectFishState(path: string, v: unknown): { state: FishState } | { er
     }
   }
 
+  const aliveField = v.alive;
+  const alive =
+    aliveField === false ? false : aliveField === true ? true : resolvedHealth > 0;
+  if (!alive && resolvedHealth !== 0) {
+    return { errors: [`${path}: dead fish must have health 0`] };
+  }
+  if (alive && resolvedHealth === 0) {
+    return { errors: [`${path}: health 0 requires alive false`] };
+  }
+
   return {
     state: {
       displayName: v.displayName as string,
+      alive,
       hungerDays: v.hungerDays as number,
       health: resolvedHealth,
-      hungerStage,
+      hungerStage: hungerStage as FishHungerStage,
       weightGrams: v.weightGrams as number,
       species: species as FishSpeciesTag,
     },

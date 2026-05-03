@@ -1,6 +1,7 @@
 export type {
   FishBecameHungryEvent,
   FishBecameStarvingEvent,
+  FishDiedStarvationEvent,
   FishEntity,
   FishHungerMilestoneEvent,
   FishHungerStage,
@@ -47,6 +48,7 @@ export type { StepFishKinematicsOptions } from "./movement/fishKinematics";
 export {
   FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
   SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
+  THIRD_HUNGER_DEATH_THRESHOLD_DAYS,
 } from "./hungerConstants";
 export {
   dispatchFishHungerMilestoneEvents,

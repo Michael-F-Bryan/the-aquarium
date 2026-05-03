@@ -77,6 +77,7 @@ export function stepFishKinematicsWallDelta(
 
   for (const entity of fishWithKinematics(world)) {
     const e = entity as FishKinematicsEntity & SimulationEntity;
+    if (!e.fish.alive) continue;
     if (hasActiveMovementTarget(e)) continue;
 
     const desired = desiredIdleVelocity(e.fish.displayName, simTimeDays);

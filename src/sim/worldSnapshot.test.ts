@@ -20,6 +20,7 @@ describe("simulation world snapshot hooks", () => {
     const world = createSimulationWorld();
     registerFish(world, {
       fish: {
+        alive: true,
         displayName: "Hungry",
         hungerDays: 1.25,
         health: 3,
@@ -32,6 +33,7 @@ describe("simulation world snapshot hooks", () => {
     });
     registerFish(world, {
       fish: {
+        alive: true,
         displayName: "Fed",
         hungerDays: 0,
         health: 3,
@@ -68,6 +70,7 @@ describe("simulation world snapshot hooks", () => {
     const world = createSimulationWorld();
     registerFish(world, {
       fish: {
+        alive: true,
         displayName: "V2",
         hungerDays: 0,
         health: 3,
@@ -104,6 +107,7 @@ describe("simulation world snapshot hooks", () => {
     expect(f!.fish.health).toBe(2);
     expect(f!.fish.hungerStage).toBe("hungry");
     expect(f!.fish.hungerDays).toBe(2);
+    expect(f!.fish.alive).toBe(true);
   });
 
   it("deserializes v1 without hungerStage inferring starving when past second threshold", () => {
@@ -128,12 +132,61 @@ describe("simulation world snapshot hooks", () => {
     expect(f!.fish.health).toBe(1);
     expect(f!.fish.hungerStage).toBe("starving");
     expect(f!.fish.hungerDays).toBe(3.5);
+    expect(f!.fish.alive).toBe(true);
+  });
+
+  it("deserializes v1 without hungerStage inferring starvation death when past third threshold", () => {
+    const legacy = {
+      version: SIMULATION_WORLD_SNAPSHOT_VERSION_V1,
+      entities: [
+        {
+          fish: {
+            displayName: "LegacyDead",
+            hungerDays: 5,
+            health: 1,
+            weightGrams: 100,
+            species: { kind: "herbivore" },
+          },
+          position: { x: 0, y: 0.35, z: 0 },
+          velocity: { x: 0, y: 0, z: 0 },
+        },
+      ],
+    };
+    const world = deserializeSimulationWorldSnapshot(legacy);
+    const [f] = [...fishWithKinematics(world)];
+    expect(f!.fish.health).toBe(0);
+    expect(f!.fish.alive).toBe(false);
+    expect(f!.fish.hungerStage).toBe("starving");
+    expect(f!.fish.hungerDays).toBe(5);
+  });
+
+  it("round-trips starvation death (alive false, health 0)", () => {
+    const world = createSimulationWorld();
+    registerFish(world, {
+      fish: {
+        alive: false,
+        displayName: "Floater",
+        hungerDays: 4.51,
+        health: 0,
+        hungerStage: "starving",
+        weightGrams: 100,
+        species: { kind: "herbivore" },
+      },
+      position: { x: 0, y: 0.2, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+    });
+    const restored = deserializeSimulationWorldSnapshot(JSON.parse(JSON.stringify(serializeSimulationWorldSnapshot(world))));
+    const [f] = [...fishWithKinematics(restored)];
+    expect(f!.fish.alive).toBe(false);
+    expect(f!.fish.health).toBe(0);
+    expect(f!.fish.hungerDays).toBeCloseTo(4.51, 10);
   });
 
   it("round-trips optional movementTargetPosition on fish", () => {
     const world = createSimulationWorld();
     const base = assertFishEntityShape({
       fish: {
+        alive: true,
         displayName: "Targeted",
         hungerDays: 0.1,
         health: 3,

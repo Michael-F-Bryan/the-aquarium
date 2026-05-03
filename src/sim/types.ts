@@ -18,8 +18,17 @@ export type FishBecameStarvingEvent = {
   displayName: string;
 };
 
+/** Emitted once when a fish dies of starvation (health 1→0). Reserved for future toasts. */
+export type FishDiedStarvationEvent = {
+  kind: "fish_died_starvation";
+  displayName: string;
+};
+
 /** Toasts / UI: one entry per hunger milestone crossing in a single hunger step. */
-export type FishHungerMilestoneEvent = FishBecameHungryEvent | FishBecameStarvingEvent;
+export type FishHungerMilestoneEvent =
+  | FishBecameHungryEvent
+  | FishBecameStarvingEvent
+  | FishDiedStarvationEvent;
 
 /**
  * Fish-only simulation fields (movement uses shared `position` / `velocity`).
@@ -27,6 +36,8 @@ export type FishHungerMilestoneEvent = FishBecameHungryEvent | FishBecameStarvin
  */
 export type FishState = {
   displayName: string;
+  /** When false, the fish is dead (health 0); hunger does not advance and movement systems skip. */
+  alive: boolean;
   /** Days since last meal; 0 means just ate. */
   hungerDays: number;
   health: 0 | 1 | 2 | 3;
