@@ -1,4 +1,5 @@
 export type {
+  FishAteFoodEvent,
   FishBecameHungryEvent,
   FishBecameStarvingEvent,
   FishDiedStarvationEvent,
@@ -45,7 +46,18 @@ export {
 export type { SimulationClockState } from "./simulationClock";
 export { stepFishKinematicsWallDelta } from "./movement/fishKinematics";
 export type { StepFishKinematicsOptions } from "./movement/fishKinematics";
-export { updateHerbivoreNearestFoodTargets } from "./targeting/nearestFoodTargeting";
+export {
+  compareFoodEntitiesStableTieBreak,
+  updateHerbivoreNearestFoodTargets,
+} from "./targeting/nearestFoodTargeting";
+export {
+  HERBIVORE_FOOD_EAT_DISTANCE,
+  stepHerbivoreEatNearbyFood,
+} from "./interactions/herbivoreEatNearbyFood";
+export {
+  dispatchFishAteFoodEvents,
+  subscribeFishAteFoodEvents,
+} from "./fishEatFoodEventBridge";
 export {
   FIRST_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,
   SECOND_HUNGER_HEALTH_LOSS_THRESHOLD_DAYS,

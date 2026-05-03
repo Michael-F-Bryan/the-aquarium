@@ -13,7 +13,7 @@ function distanceSquared(a: Vec3, b: Vec3): number {
  * Deterministic ordering when two flakes are equally far: lexicographic `position`,
  * then `spawnedAtSimDays` (mirrors stable array / id tie-break intent in issue #11).
  */
-function compareFoodTieBreak(a: SimulationEntity, b: SimulationEntity): number {
+export function compareFoodEntitiesStableTieBreak(a: SimulationEntity, b: SimulationEntity): number {
   const pa = a.position;
   const pb = b.position;
   if (pa.x !== pb.x) return pa.x - pb.x;
@@ -29,7 +29,7 @@ function compareFoodTieBreak(a: SimulationEntity, b: SimulationEntity): number {
  */
 export function updateHerbivoreNearestFoodTargets(world: World<SimulationEntity>): void {
   const foods = [...foodWithPosition(world)] as SimulationEntity[];
-  foods.sort(compareFoodTieBreak);
+  foods.sort(compareFoodEntitiesStableTieBreak);
 
   for (const entity of fishWithKinematics(world)) {
     const e = entity as SimulationEntity;
