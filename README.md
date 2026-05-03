@@ -2,6 +2,13 @@
 
 A browser game where you need to keep your fish alive.
 
+## Getting started (local shell)
+
+- Install: `pnpm install`
+- Dev server: `pnpm dev` (open the URL Vite prints; the shell should load with no console errors)
+- Production build: `pnpm build` then `pnpm preview` if you want to smoke-test the bundle
+- Checks: `pnpm lint` and `pnpm test`
+
 ## Game Rules
 
 - You start the game with one baby fish (random name and appearance).
