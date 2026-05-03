@@ -2,6 +2,7 @@ import { SimulationClockProvider } from "./game/SimulationClockProvider";
 import { useSimulationClock } from "./game/simulationClockContext";
 import { TankScene } from "./tank/TankScene";
 import { DayCounter } from "./ui/DayCounter";
+import { ScorePlaceholder } from "./ui/ScorePlaceholder";
 import { ToastLogShell } from "./ui/ToastLogShell";
 
 function GameShell() {
@@ -10,6 +11,7 @@ function GameShell() {
     <div className="relative flex min-h-dvh flex-col">
       <div className="pointer-events-auto absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
         <DayCounter />
+        <ScorePlaceholder />
         <ToastLogShell entries={[]} />
         <button
           type="button"
