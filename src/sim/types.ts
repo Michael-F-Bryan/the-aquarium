@@ -24,6 +24,12 @@ export type FishDiedStarvationEvent = {
   displayName: string;
 };
 
+/** Emitted once per flake successfully eaten (herbivore feed loop; toasts in a later issue). */
+export type FishAteFoodEvent = {
+  kind: "fish_ate_food";
+  displayName: string;
+};
+
 /** Toasts / UI: one entry per hunger milestone crossing in a single hunger step. */
 export type FishHungerMilestoneEvent =
   | FishBecameHungryEvent
