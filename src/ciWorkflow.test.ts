@@ -13,7 +13,10 @@ describe("CI workflow contract", () => {
     const yml = readFileSync(workflowPath, "utf8");
     expect(yml).toMatch(/pull_request/);
     expect(yml).toContain("pnpm/action-setup@v4");
-    expect(yml).toContain("version: 10");
+    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+      packageManager?: string;
+    };
+    expect(pkg.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/);
     expect(yml).toContain("actions/setup-node@v4");
     expect(yml).toContain('cache: "pnpm"');
     expect(yml).toContain("pnpm install --frozen-lockfile");
