@@ -85,6 +85,6 @@ describe('ECS current mechanics systems', () => {
     resolveFlakeEatingSystem.run(runtime)
     const ecs = selectUpdateResult(runtime)
 
-    expect(ecs).toEqual(legacy)
+    expect(ecs).toEqual({ ...legacy, commandResults: [] })
   })
 })

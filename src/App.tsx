@@ -12,14 +12,25 @@ import {
 import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
 import {
+  createAppRuntimeCommandQueue,
+  mergeRuntimeParams,
+  stepAppRuntime,
+} from './game/appRuntime'
+import {
   buildAutoplayLogJson,
   type AutoplayLogEntry,
 } from './game/autoplay/logExport'
 import { chooseAutoplayFoodDrop } from './game/autoplay/policy'
-import { dropFlakeFood } from './game/mechanics/foodDrop'
 import { buildReviewSessionPreset } from './game/reviewPreset'
 import { formatSimulationEvent } from './game/toastMessages'
-import { update } from './game/update'
+
+type AppRuntimeCommandMeta = {
+  readonly type: 'autoplay-food-drop'
+  readonly atDay: number
+  readonly targetFishId: string
+  readonly liveFishCount: number
+  readonly foodCount: number
+}
 
 function App() {
   const [params, setParams] = useState<Params>(() => defaultParams)
@@ -61,6 +72,9 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastClosedRef = useRef(gameState.lastClosedCalendarDayFloor)
   const gameRef = useRef(gameState)
+  const commandQueueRef = useRef(
+    createAppRuntimeCommandQueue<AppRuntimeCommandMeta>(),
+  )
 
   useEffect(() => {
     gameRef.current = gameState
@@ -110,22 +124,38 @@ function App() {
       last = now
       const p = paramsRef.current
       const w = worldRef.current
-      const merged: Params = {
-        ...p,
-        aquariumWidth: w.width,
-        aquariumHeight: w.height,
-      }
+      const commands = commandQueueRef.current.drain()
       setGameState((prev) => {
-        const { state, events } = update(prev, merged, rawDelta)
-        if (events.length > 0) {
-          const batch = [...events]
+        const result = stepAppRuntime({
+          state: prev,
+          params: p,
+          worldSize: w,
+          deltaMs: rawDelta,
+          commands,
+        })
+        if (result.events.length > 0 || result.commandOutcomes.length > 0) {
+          const events = [...result.events]
+          const autoplayOutcomes = result.commandOutcomes.filter(
+            (outcome) => outcome.meta?.type === 'autoplay-food-drop',
+          )
           queueMicrotask(() => {
-            for (const ev of batch) {
+            for (const ev of events) {
               pushToast(formatSimulationEvent(ev))
+            }
+            for (const outcome of autoplayOutcomes) {
+              if (!outcome.meta) continue
+              appendAutoplayLog({
+                atDay: outcome.meta.atDay,
+                action: outcome.applied ? 'drop' : 'skip',
+                reason: outcome.applied ? 'policy-drop' : 'drop-rejected',
+                targetFishId: outcome.meta.targetFishId,
+                liveFishCount: outcome.meta.liveFishCount,
+                foodCount: outcome.meta.foodCount,
+              })
             }
           })
         }
-        return state
+        return result.state
       })
       if (active) {
         raf = requestAnimationFrame(tick)
@@ -137,7 +167,7 @@ function App() {
       active = false
       cancelAnimationFrame(raf)
     }
-  }, [pushToast])
+  }, [appendAutoplayLog, pushToast])
 
   useEffect(() => {
     if (!import.meta.env.DEV) return
@@ -145,40 +175,32 @@ function App() {
     if (paused) return
     const delay = Math.min(5000, Math.max(100, autoplayIntervalMs))
     const timer = window.setInterval(() => {
-      setGameState((prev) => {
-        const decision = chooseAutoplayFoodDrop(prev, paramsRef.current)
-        if (!decision) {
-          queueMicrotask(() => {
-            appendAutoplayLog({
-              atDay: prev.currentDay,
-              action: 'skip',
-              reason: 'no-target',
-              liveFishCount: prev.liveFish.length,
-              foodCount: prev.food.length,
-            })
-          })
-          return prev
-        }
-        const w = worldRef.current
-        const p = paramsRef.current
-        const merged: Params = {
-          ...p,
-          aquariumWidth: w.width,
-          aquariumHeight: w.height,
-        }
-        const next = dropFlakeFood(prev, merged, decision.x, decision.y)
-        const dropped = next !== prev
+      const snap = gameRef.current
+      const decision = chooseAutoplayFoodDrop(
+        snap,
+        mergeRuntimeParams(paramsRef.current, worldRef.current),
+      )
+      if (!decision) {
         queueMicrotask(() => {
           appendAutoplayLog({
-            atDay: prev.currentDay,
-            action: dropped ? 'drop' : 'skip',
-            reason: dropped ? 'policy-drop' : 'drop-rejected',
-            targetFishId: decision.targetFishId,
-            liveFishCount: prev.liveFish.length,
-            foodCount: prev.food.length,
+            atDay: snap.currentDay,
+            action: 'skip',
+            reason: 'no-target',
+            liveFishCount: snap.liveFish.length,
+            foodCount: snap.food.length,
           })
         })
-        return next
+        return
+      }
+      commandQueueRef.current.enqueue({
+        command: { type: 'drop-food', x: decision.x, y: decision.y },
+        meta: {
+          type: 'autoplay-food-drop',
+          atDay: snap.currentDay,
+          targetFishId: decision.targetFishId,
+          liveFishCount: snap.liveFish.length,
+          foodCount: snap.food.length,
+        },
       })
     }, delay)
     return () => window.clearInterval(timer)
@@ -192,11 +214,7 @@ function App() {
 
     const w = worldRef.current
     const p = paramsRef.current
-    const merged: Params = {
-      ...p,
-      aquariumWidth: w.width,
-      aquariumHeight: w.height,
-    }
+    const merged = mergeRuntimeParams(p, w)
 
     const thumb = (() => {
       try {
@@ -261,19 +279,13 @@ function App() {
   const handleDropFood = useCallback(
     (x: number, y: number) => {
       if (pausedRef.current) return
-      const w = worldRef.current
-      const p = paramsRef.current
-      const merged: Params = {
-        ...p,
-        aquariumWidth: w.width,
-        aquariumHeight: w.height,
-      }
-      setGameState((prev) => dropFlakeFood(prev, merged, x, y))
+      commandQueueRef.current.enqueue({ type: 'drop-food', x, y })
     },
     [],
   )
 
   const handleReplaceGameState = useCallback((next: State) => {
+    commandQueueRef.current.drain()
     setGameState(next)
     lastClosedRef.current = next.lastClosedCalendarDayFloor
     setSelectedId((prev) => {
@@ -322,6 +334,7 @@ function App() {
   const handleLoadAutosave = useCallback(() => {
     const r = readAutosaveFromStorage()
     if (!r.ok) return
+    commandQueueRef.current.drain()
     setGameState(r.state)
     setParams(r.params)
     lastClosedRef.current = r.state.lastClosedCalendarDayFloor
@@ -337,6 +350,7 @@ function App() {
     if (!window.confirm('Start a new game? Unsaved progress in the tank will be lost.')) {
       return
     }
+    commandQueueRef.current.drain()
     setGameState(newGameState(defaultParams))
     setParams(defaultParams)
     lastClosedRef.current = -1

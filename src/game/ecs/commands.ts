@@ -8,18 +8,39 @@ export type SimulationCommand = {
   readonly y: number
 }
 
-export function applySimulationCommands(
+export type SimulationCommandResult = {
+  readonly command: SimulationCommand
+  readonly applied: boolean
+}
+
+export type ApplySimulationCommandsResult = {
+  readonly state: State
+  readonly commandResults: readonly SimulationCommandResult[]
+}
+
+export function applySimulationCommandsWithResults(
   state: State,
   params: Params,
   commands: readonly SimulationCommand[] = [],
-): State {
+): ApplySimulationCommandsResult {
   let next = state
+  const commandResults: SimulationCommandResult[] = []
   for (const command of commands) {
+    const before = next
     switch (command.type) {
       case 'drop-food':
         next = dropFlakeFood(next, params, command.x, command.y)
         break
     }
+    commandResults.push({ command, applied: next !== before })
   }
-  return next
+  return { state: next, commandResults }
+}
+
+export function applySimulationCommands(
+  state: State,
+  params: Params,
+  commands: readonly SimulationCommand[] = [],
+): State {
+  return applySimulationCommandsWithResults(state, params, commands).state
 }

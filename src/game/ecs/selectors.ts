@@ -1,10 +1,12 @@
 import type { SimulationEvent } from '../events'
 import type { DeadFish, Fish, FishSkeleton, Food, State } from '../types'
+import type { SimulationCommandResult } from './commands'
 import type { AquariumRuntime } from './world'
 
 export type SimulationStepResult = {
   readonly state: State
   readonly events: readonly SimulationEvent[]
+  readonly commandResults: readonly SimulationCommandResult[]
 }
 
 export type AquariumReadModel = {
@@ -49,9 +51,13 @@ export function selectReadModel(runtime: AquariumRuntime): AquariumReadModel {
   }
 }
 
-export function selectUpdateResult(runtime: AquariumRuntime): SimulationStepResult {
+export function selectUpdateResult(
+  runtime: AquariumRuntime,
+  commandResults: readonly SimulationCommandResult[] = [],
+): SimulationStepResult {
   return {
     state: selectState(runtime),
     events: selectEvents(runtime),
+    commandResults,
   }
 }

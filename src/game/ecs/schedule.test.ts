@@ -11,7 +11,10 @@ import type { SimulationEvent } from '../events'
 import type { Params } from '../params'
 import { minimalFish, minimalState, testParams } from '../test/fixtures'
 import type { State } from '../types'
-import { applySimulationCommands, type SimulationCommand } from './commands'
+import {
+  applySimulationCommandsWithResults,
+  type SimulationCommand,
+} from './commands'
 import type { SimulationStepResult } from './selectors'
 import { runSimulationStep, simulationSchedule } from './schedule'
 
@@ -23,7 +26,12 @@ function runLegacyReferenceStep(input: {
 }): SimulationStepResult {
   const clampedDeltaMs = Math.min(Math.max(input.deltaMs, 0), 250)
   const events: SimulationEvent[] = []
-  let state = applySimulationCommands(input.state, input.params, input.commands)
+  const commandApplication = applySimulationCommandsWithResults(
+    input.state,
+    input.params,
+    input.commands,
+  )
+  let state = commandApplication.state
 
   state = {
     ...state,
@@ -50,7 +58,7 @@ function runLegacyReferenceStep(input: {
 
   state = sinkAndPruneDead(state, input.params, clampedDeltaMs)
 
-  return { state, events }
+  return { state, events, commandResults: commandApplication.commandResults }
 }
 
 describe('simulationSchedule', () => {
@@ -90,6 +98,16 @@ describe('simulationSchedule', () => {
           velocity: { x: 0, y: 0 },
         },
       },
+    ])
+    expect(
+      runSimulationStep({
+        state,
+        params,
+        deltaMs: 100,
+        commands: [{ type: 'drop-food', x: 20, y: 30 }],
+      }).commandResults,
+    ).toEqual([
+      { command: { type: 'drop-food', x: 20, y: 30 }, applied: true },
     ])
   })
 
