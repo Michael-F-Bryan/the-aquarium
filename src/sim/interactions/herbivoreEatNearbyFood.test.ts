@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createSimulationWorld, registerFish, registerFood } from "../world";
 import { dispatchFishAteFoodEvents, subscribeFishAteFoodEvents } from "../fishEatFoodEventBridge";
+import { WEIGHT_GRAMS_GAIN_PER_SUCCESSFUL_FOOD_EAT_AT_MAX_HEALTH } from "./eatConstants";
 import { HERBIVORE_FOOD_EAT_DISTANCE, stepHerbivoreEatNearbyFood } from "./herbivoreEatNearbyFood";
 
 const herbivoreFish = {
@@ -45,6 +46,19 @@ describe("stepHerbivoreEatNearbyFood", () => {
     expect(fish.fish.hungerStage).toBe("healthy");
     expect((fish as { movementTargetPosition?: unknown }).movementTargetPosition).toBeUndefined();
     expect(fish.fish.health).toBe(3);
+    expect(fish.fish.weightGrams).toBe(100 + WEIGHT_GRAMS_GAIN_PER_SUCCESSFUL_FOOD_EAT_AT_MAX_HEALTH);
+  });
+
+  it("at max health, adds configured weight grams and does not change health", () => {
+    const world = createSimulationWorld();
+    const fish = registerFish(world, {
+      ...herbivoreFish,
+      fish: { ...herbivoreFish.fish, weightGrams: 250 },
+    });
+    registerFood(world, { food: { spawnedAtSimDays: 0 }, position: { x: 0, y: 0.35, z: 0 } });
+    stepHerbivoreEatNearbyFood(world, { paused: false });
+    expect(fish.fish.health).toBe(3);
+    expect(fish.fish.weightGrams).toBe(250 + WEIGHT_GRAMS_GAIN_PER_SUCCESSFUL_FOOD_EAT_AT_MAX_HEALTH);
   });
 
   it("gains one health per successful eat when below max, capped at 3", () => {
@@ -62,6 +76,7 @@ describe("stepHerbivoreEatNearbyFood", () => {
     stepHerbivoreEatNearbyFood(world, { paused: false });
     expect(fish.fish.health).toBe(2);
     expect(fish.fish.hungerDays).toBe(0);
+    expect(fish.fish.weightGrams).toBe(100);
   });
 
   it("at health 2, one eat reaches full health without exceeding 3", () => {

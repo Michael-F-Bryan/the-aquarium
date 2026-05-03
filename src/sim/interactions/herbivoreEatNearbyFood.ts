@@ -2,7 +2,10 @@ import type { World } from "miniplex";
 import { compareFoodEntitiesStableTieBreak } from "../targeting/nearestFoodTargeting";
 import { resetFishHungerAfterSuccessfulMeal } from "../hungerTimer";
 import type { FishAteFoodEvent, FishState, SimulationEntity, Vec3 } from "../types";
-import { HEALTH_GAIN_PER_SUCCESSFUL_FOOD_EAT_WHEN_BELOW_MAX } from "./eatConstants";
+import {
+  HEALTH_GAIN_PER_SUCCESSFUL_FOOD_EAT_WHEN_BELOW_MAX,
+  WEIGHT_GRAMS_GAIN_PER_SUCCESSFUL_FOOD_EAT_AT_MAX_HEALTH,
+} from "./eatConstants";
 import { fishWithKinematics, foodWithPosition } from "../world";
 
 /** World-space mouth reach: fish snaps up a flake when centers are within this distance. */
@@ -16,9 +19,13 @@ const eatDistanceSquared = HERBIVORE_FOOD_EAT_DISTANCE * HERBIVORE_FOOD_EAT_DIST
  */
 const MOVEMENT_TARGET_MATCH_EPSILON_SQ = 1e-10;
 
-/** Once per successful flake eat; no-op at full health (weight path is separate). */
-function applyHealthGainAfterSuccessfulHerbivoreFoodMeal(fish: FishState): void {
-  if (!fish.alive || fish.health >= 3) return;
+/** Once per successful flake eat: weight at full health, else health recovery (mutually exclusive). */
+function applyHerbivoreFlakeMealOutcomes(fish: FishState): void {
+  if (!fish.alive) return;
+  if (fish.health === 3) {
+    fish.weightGrams += WEIGHT_GRAMS_GAIN_PER_SUCCESSFUL_FOOD_EAT_AT_MAX_HEALTH;
+    return;
+  }
   fish.health = (fish.health +
     HEALTH_GAIN_PER_SUCCESSFUL_FOOD_EAT_WHEN_BELOW_MAX) as FishState["health"];
 }
@@ -116,7 +123,7 @@ export function stepHerbivoreEatNearbyFood(
 
     world.remove(chosen);
     resetFishHungerAfterSuccessfulMeal(fishEntity.fish!);
-    applyHealthGainAfterSuccessfulHerbivoreFoodMeal(fishEntity.fish!);
+    applyHerbivoreFlakeMealOutcomes(fishEntity.fish!);
     delete fishEntity.movementTargetPosition;
     events.push({ kind: "fish_ate_food", displayName: fishEntity.fish!.displayName });
   }
