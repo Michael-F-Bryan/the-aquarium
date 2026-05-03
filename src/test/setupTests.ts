@@ -9,3 +9,11 @@ class ResizeObserverStub {
 
 globalThis.ResizeObserver =
   globalThis.ResizeObserver ?? ResizeObserverStub;
+
+// jsdom logs noisy "Not implemented" warnings for 2D canvas contexts.
+if (typeof HTMLCanvasElement !== "undefined") {
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    configurable: true,
+    value: () => null,
+  });
+}

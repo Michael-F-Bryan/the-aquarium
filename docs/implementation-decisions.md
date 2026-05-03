@@ -245,3 +245,25 @@ How it helps the game:
 - Fewer edge-case input bugs.
 - More predictable controls as UI complexity grows.
 
+### 17) Playable-seed in-tank sprite direction
+
+Decision:
+- Keep the in-tank visual pass procedural for Release 0 (R3F primitives + generated textures), with no external art pipeline dependency yet.
+- Use consistent silhouette language:
+  - fish as layered body + fin + eye forms,
+  - food as flattened flake shards,
+  - floor as a low-contrast rippled seabed texture.
+- Reserve stronger color contrast for fish and food, while floor values stay darker to preserve readability at a glance.
+
+Why:
+- The playable seed needs coherent visuals now, but introducing external sprite/atlas tooling this early would slow iteration.
+- Procedural assets keep implementation inside the existing TypeScript/R3F stack and make style adjustments cheap.
+
+How it helps the game:
+- Improves readability at default camera framing and common entity densities.
+- Gives future tickets concrete constraints for visual additions:
+  - avoid render-to-sim writes,
+  - preserve fish-vs-food silhouette contrast,
+  - keep floor/background subdued relative to gameplay entities,
+  - prefer reusable palette constants over ad-hoc per-component colors.
+
