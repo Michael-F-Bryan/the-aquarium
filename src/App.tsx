@@ -1,4 +1,5 @@
 import { SimulationClockProvider } from "./game/SimulationClockProvider";
+import { SimulationWorldProvider } from "./game/SimulationWorldProvider";
 import { useSimulationClock } from "./game/simulationClockContext";
 import { TankScene } from "./tank/TankScene";
 import { DayCounter } from "./ui/DayCounter";
@@ -43,7 +44,9 @@ function GameShell() {
 export default function App() {
   return (
     <SimulationClockProvider>
-      <GameShell />
+      <SimulationWorldProvider>
+        <GameShell />
+      </SimulationWorldProvider>
     </SimulationClockProvider>
   );
 }
