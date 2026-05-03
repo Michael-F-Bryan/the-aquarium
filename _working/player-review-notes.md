@@ -81,6 +81,19 @@
 - Early starvation pressure can be relaxed without changing production defaults.
 - We now have lightweight run artifacts (autoplay logs) to inspect decisions and temporal outcomes.
 
+## Bug Investigation: "Autoplay log = 0"
+
+- Investigated via browser pass and traced behavior to activation workflow confusion, not policy logic failure.
+- Root cause: review preset did not guarantee autoplay activation, so runs could start in a non-automated state.
+- Fix implemented:
+  - review preset now enables autoplay automatically
+  - review preset enforces known interval default (400 ms)
+  - debug panel now shows explicit autoplay status (`active` / `inactive`)
+- Post-fix validation pass:
+  - status shows active
+  - log entries increment rapidly
+  - food appears in tank under autoplay decisions
+
 ## Suggestions for "Fun, Addictive" Tuning
 
 - Improve first-session survivability so learning happens before punishment.

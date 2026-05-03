@@ -22,7 +22,7 @@ export function DebugControlsSection({
         onClick={onApplyReviewPreset}
         className="rounded border border-sky-700/60 bg-sky-950/40 px-2 py-1.5 text-xs text-sky-200 hover:bg-sky-900/40"
       >
-        Apply review preset
+        Apply review preset (auto-bot)
       </button>
       <label className="block text-xs text-slate-400">
         <span className="mb-1 block text-slate-500">Day length (ms)</span>

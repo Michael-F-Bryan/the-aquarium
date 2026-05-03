@@ -48,6 +48,12 @@ export function AutoplayDebugSection({
         />
       </label>
 
+      <p className="text-[11px] text-slate-400">
+        Status:{' '}
+        <span className={enabled ? 'text-emerald-300' : 'text-slate-500'}>
+          {enabled ? 'active' : 'inactive'}
+        </span>
+      </p>
       <p className="text-[11px] text-slate-400">Log entries: {entriesCount}</p>
 
       <div className="flex gap-2">

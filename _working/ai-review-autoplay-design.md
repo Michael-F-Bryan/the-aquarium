@@ -179,6 +179,7 @@ Status update (partially implemented):
 - Baseline policy module exists (`chooseAutoplayFoodDrop`) with tests.
 - Dev-only autoplay controls now run policy decisions on a configurable interval.
 - Action logs can be copied to JSON from the UI.
+- Review preset now auto-enables autoplay and sets a stable decision interval.
 - Remaining gap: true fixed-step offline runner and seed-controlled scenario batches.
 
 ### Phase 3: Replay and Review Workflow

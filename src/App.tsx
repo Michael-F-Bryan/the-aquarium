@@ -13,6 +13,7 @@ import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
 import { chooseAutoplayFoodDrop } from './game/autoplay/policy'
 import { dropFlakeFood } from './game/mechanics/foodDrop'
+import { buildReviewSessionPreset } from './game/reviewPreset'
 import { formatSimulationEvent } from './game/toastMessages'
 import { update } from './game/update'
 
@@ -255,13 +256,12 @@ function App() {
   }, [])
 
   const handleApplyReviewPreset = useCallback(() => {
-    setParams((p) => ({
-      ...p,
-      dayLengthMs: 20_000,
-      foodLifetimeDays: 2,
-      starvationGraceDays: 5,
-    }))
-  }, [])
+    const preset = buildReviewSessionPreset(paramsRef.current)
+    setParams(preset.params)
+    setAutoplayEnabled(preset.autoplay.enabled)
+    setAutoplayIntervalMs(preset.autoplay.intervalMs)
+    pushToast('Review preset applied (autoplay enabled)')
+  }, [pushToast])
 
   const handleDropFood = useCallback(
     (x: number, y: number) => {
