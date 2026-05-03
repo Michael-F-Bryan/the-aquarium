@@ -77,7 +77,10 @@ function closeOneCalendarDay(
     if (fish.health === 0) return fish
     const oldHealth: Health = fish.health
     let h: Health = fish.health
+    const closeSimTime = completedDayFloor + 1
+    const starvationGraceActive = closeSimTime <= params.starvationGraceDays
     if (
+      !starvationGraceActive &&
       !ateWithinWindowBeforeCalendarClose(
         fish.lastAte,
         completedDayFloor,

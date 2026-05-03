@@ -40,6 +40,27 @@ describe('runCalendarBoundaries', () => {
     expect(next.liveFish[0].ageDays).toBe(1)
   })
 
+  it('skips starvation damage during configured grace days', () => {
+    const fish = minimalFish({
+      ageDays: 0,
+      lastAte: NEVER_ATE,
+      health: 3,
+      physics: { position: { x: 50, y: 50 }, velocity: { x: 0, y: 0 } },
+    })
+    const state = minimalState({
+      currentDay: 1.2,
+      lastClosedCalendarDayFloor: -1,
+      liveFish: [fish],
+      rngState: 1,
+    })
+    const { state: next } = runCalendarBoundaries(
+      state,
+      testParams({ starvationGraceDays: 2 }),
+    )
+    expect(next.lastClosedCalendarDayFloor).toBe(0)
+    expect(next.liveFish[0].health).toBe(3)
+  })
+
   it('does not mutate adults to carnivores when population >= 5', () => {
     const fish = [
       bigParent('f0', 400),

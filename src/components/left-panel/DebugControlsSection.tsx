@@ -49,6 +49,24 @@ export function DebugControlsSection({ params, setParams }: Props) {
       </label>
 
       <label className="block text-xs text-slate-400">
+        <span className="mb-1 block text-slate-500">Starvation grace (days)</span>
+        <input
+          type="number"
+          min={0}
+          max={30}
+          step={1}
+          value={params.starvationGraceDays}
+          onChange={(e) =>
+            setParams((p) => ({
+              ...p,
+              starvationGraceDays: Number(e.target.value),
+            }))
+          }
+          className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-sm text-slate-200"
+        />
+      </label>
+
+      <label className="block text-xs text-slate-400">
         <span className="mb-1 block text-slate-500">Reproduce chance cap</span>
         <input
           type="range"
