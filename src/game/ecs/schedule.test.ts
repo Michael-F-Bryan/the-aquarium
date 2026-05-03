@@ -107,7 +107,12 @@ describe('simulationSchedule', () => {
         commands: [{ type: 'drop-food', x: 20, y: 30 }],
       }).commandResults,
     ).toEqual([
-      { command: { type: 'drop-food', x: 20, y: 30 }, applied: true },
+      {
+        command: { type: 'drop-food', x: 20, y: 30 },
+        applied: true,
+        reason: 'dropped',
+        target: { x: 20, y: 30 },
+      },
     ])
   })
 
