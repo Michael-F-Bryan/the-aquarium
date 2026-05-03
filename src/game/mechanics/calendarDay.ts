@@ -1,5 +1,6 @@
+import { MIDNIGHT_MEAL_WINDOW_DAYS } from '../constants'
 import { rngNext01 } from '../rng'
-import { NEVER_ATE, ateDuringSimDay } from '../satiation'
+import { NEVER_ATE, ateWithinWindowBeforeCalendarClose } from '../satiation'
 import type { Params } from '../params'
 import type { DeadFish, Fish, State } from '../types'
 
@@ -48,7 +49,7 @@ function spawnBaby(
 
 /**
  * One simulated midnight: hunger, mortality, reproduction, mutation, aging.
- * Hunger: no meal during the calendar day that just ended (`completedDayFloor`).
+ * Hunger: no meal in the rolling `MIDNIGHT_MEAL_WINDOW_DAYS` window before close.
  */
 function closeOneCalendarDay(
   state: State,
@@ -65,7 +66,13 @@ function closeOneCalendarDay(
   let liveFish = state.liveFish.map((fish) => {
     if (fish.health === 0) return fish
     let h: Health = fish.health
-    if (!ateDuringSimDay(fish.lastAte, completedDayFloor)) {
+    if (
+      !ateWithinWindowBeforeCalendarClose(
+        fish.lastAte,
+        completedDayFloor,
+        MIDNIGHT_MEAL_WINDOW_DAYS,
+      )
+    ) {
       h = decHealth(h)
     }
     return { ...fish, health: h }

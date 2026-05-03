@@ -3,13 +3,19 @@ import type { Fish } from './types'
 /** Sentinel: fish has never eaten (always hungry for calendar checks). */
 export const NEVER_ATE = -1
 
-/** Ate at least once during simulated calendar day `[dayIndex, dayIndex + 1)`. */
-export function ateDuringSimDay(
+/**
+ * When simulated calendar day `completedDayFloor` closes, sim time is
+ * `completedDayFloor + 1`. Fish skip starvation damage if `lastAte` falls in
+ * `[that instant - windowDays, that instant]` (inclusive).
+ */
+export function ateWithinWindowBeforeCalendarClose(
   lastAte: number,
-  dayIndex: number,
+  completedDayFloor: number,
+  windowDays: number,
 ): boolean {
   if (lastAte < 0) return false
-  return lastAte >= dayIndex && lastAte < dayIndex + 1
+  const closeSimTime = completedDayFloor + 1
+  return lastAte >= closeSimTime - windowDays && lastAte <= closeSimTime
 }
 
 /**

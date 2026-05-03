@@ -1,5 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { State } from '../game/types'
+import {
+  drawDeadFishOnCanvas,
+  drawDeadFishPlaceholder,
+  drawLiveFishOnCanvas,
+  drawLiveFishPlaceholder,
+} from '../game/render/drawFishOnCanvas'
+import type { FishSpriteAtlas } from '../game/render/fishSprites'
+import { loadFishSprites } from '../game/render/fishSprites'
 
 type Props = {
   state: State
@@ -8,9 +16,24 @@ type Props = {
   onDropFood?: (x: number, y: number) => void
 }
 
-/** Aquarium canvas: water, food, fish (live + dead). */
+/** Aquarium canvas: water, food, fish (live + dead) with SVG fish sprites. */
 export function AquariumCanvas({ state, onWorldSize, onDropFood }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [fishSprites, setFishSprites] = useState<FishSpriteAtlas | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    loadFishSprites()
+      .then((atlas) => {
+        if (!cancelled) setFishSprites(atlas)
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -55,14 +78,14 @@ export function AquariumCanvas({ state, onWorldSize, onDropFood }: Props) {
         ctx.stroke()
       }
 
-      render(ctx, state)
+      render(ctx, state, fishSprites)
     }
 
     paint()
     const ro = new ResizeObserver(paint)
     ro.observe(parent)
     return () => ro.disconnect()
-  }, [state, onWorldSize])
+  }, [state, onWorldSize, fishSprites])
 
   return (
     <canvas
@@ -88,7 +111,11 @@ export function AquariumCanvas({ state, onWorldSize, onDropFood }: Props) {
 
 const FOOD_RADIUS = 5
 
-function render(ctx: CanvasRenderingContext2D, state: State) {
+function render(
+  ctx: CanvasRenderingContext2D,
+  state: State,
+  atlas: FishSpriteAtlas | null,
+) {
   const { food, liveFish, deadFish } = state
 
   food.forEach((piece) => {
@@ -113,12 +140,13 @@ function render(ctx: CanvasRenderingContext2D, state: State) {
     ctx.restore()
   })
 
-  liveFish.forEach((fish) => {
-    ctx.fillStyle = fish.species === 'normal' ? 'blue' : 'red'
-    ctx.fillRect(fish.physics.position.x, fish.physics.position.y, 10, 10)
-  })
   deadFish.forEach((fish) => {
-    ctx.fillStyle = 'gray'
-    ctx.fillRect(fish.physics.position.x, fish.physics.position.y, 10, 10)
+    if (atlas) drawDeadFishOnCanvas(ctx, fish, atlas)
+    else drawDeadFishPlaceholder(ctx, fish)
+  })
+
+  liveFish.forEach((fish) => {
+    if (atlas) drawLiveFishOnCanvas(ctx, fish, atlas)
+    else drawLiveFishPlaceholder(ctx, fish)
   })
 }

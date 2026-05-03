@@ -1,5 +1,12 @@
-/** Hit-box half-size for fish (matches canvas placeholder rect). */
+/** Simulated days of meals that count toward avoiding midnight health loss. */
+export const MIDNIGHT_MEAL_WINDOW_DAYS = 1.5
+
+/** Hit-box half-size for fish (logical sim anchor is center of this box). */
 export const FISH_HALF = 5
+
+/** On-canvas sprite draw size (CSS pixels), centered on the hit anchor. */
+export const FISH_SPRITE_W = 40
+export const FISH_SPRITE_H = 22
 
 export const FOOD_PICKUP_RADIUS = 14
 

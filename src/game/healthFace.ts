@@ -1,6 +1,6 @@
 import type { Fish } from './types'
 
-/** Maps health to a simple face for lists and labels (canvas will use sprites later). */
+/** Maps health to a face emoji for lists, HUD, and canvas labels above fish sprites. */
 export function healthFace(health: Fish['health']): string {
   switch (health) {
     case 3:
