@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { NEVER_ATE } from '../satiation'
-import { makeTestFish, minimalState, testParams } from '../test/fixtures'
+import { makeTestFish, minimalGameSnapshotPayload, testParams } from '../test/fixtures'
 import { chooseAutoplayFoodDrop } from './policy'
 
 describe('chooseAutoplayFoodDrop', () => {
   it('returns null when no fish currently wants food', () => {
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       currentDay: 10,
       liveFish: [
         makeTestFish({
@@ -32,7 +32,7 @@ describe('chooseAutoplayFoodDrop', () => {
       lastAte: NEVER_ATE,
       physics: { position: { x: 40, y: 50 }, velocity: { x: 0, y: 0 } },
     })
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       currentDay: 2.2,
       liveFish: [healthier, lowHealth],
     })
@@ -50,7 +50,7 @@ describe('chooseAutoplayFoodDrop', () => {
       lastAte: NEVER_ATE,
       physics: { position: { x: 100, y: 100 }, velocity: { x: 0, y: 0 } },
     })
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       currentDay: 3,
       liveFish: [fish],
       food: [

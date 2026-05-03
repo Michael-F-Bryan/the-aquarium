@@ -42,9 +42,6 @@ export function makeTestFish(over: Partial<Fish> = {}): Fish {
   }
 }
 
-/** @deprecated use makeTestFish */
-export const minimalFish = makeTestFish
-
 export const minimalGameSnapshotPayload = (
   over: Partial<GameSnapshotPayload> = {},
 ): GameSnapshotPayload => ({
@@ -60,5 +57,3 @@ export const minimalGameSnapshotPayload = (
   ...over,
 })
 
-/** @deprecated use minimalGameSnapshotPayload */
-export const minimalState = minimalGameSnapshotPayload

@@ -4,11 +4,11 @@ import {
   parseGameSnapshot,
   serializeGameSnapshot,
 } from './snapshot'
-import { makeTestFish, minimalState } from './test/fixtures'
+import { makeTestFish, minimalGameSnapshotPayload } from './test/fixtures'
 
 describe('parseGameSnapshot', () => {
   it('round-trips valid state', () => {
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       currentDay: 1.5,
       liveFish: [makeTestFish({ id: 'fish-0', name: 'Fin' })],
     })
@@ -21,7 +21,7 @@ describe('parseGameSnapshot', () => {
   it('rejects wrong schemaVersion', () => {
     const r = parseGameSnapshot({
       schemaVersion: 999,
-      state: minimalState(),
+      state: minimalGameSnapshotPayload(),
     })
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.error).toContain('Unsupported')
@@ -36,7 +36,7 @@ describe('parseGameSnapshot', () => {
   })
 
   it('rejects non-boolean appearance eyelashes', () => {
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       liveFish: [makeTestFish({ id: 'fish-0', name: 'Fin' })],
     })
     const json = JSON.parse(serializeGameSnapshot(state)) as {

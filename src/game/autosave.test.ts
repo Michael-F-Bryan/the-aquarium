@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { buildAutosaveJson, parseAutosaveJson } from './autosave'
 import { defaultParams } from './params'
-import { minimalFish, minimalState } from './test/fixtures'
+import { makeTestFish, minimalGameSnapshotPayload } from './test/fixtures'
 
 describe('autosave bundle', () => {
   it('round-trips state and params', () => {
-    const snapshot = minimalState({
-      liveFish: [minimalFish({ name: 'Zed' })],
+    const snapshot = minimalGameSnapshotPayload({
+      liveFish: [makeTestFish({ name: 'Zed' })],
     })
     const params = { ...defaultParams, dayLengthMs: 12345 }
     const raw = buildAutosaveJson({
@@ -24,7 +24,7 @@ describe('autosave bundle', () => {
 
   it('rejects autosaves with non-finite runtime params', () => {
     const raw = buildAutosaveJson({
-      snapshot: minimalState(),
+      snapshot: minimalGameSnapshotPayload(),
       params: { ...defaultParams, aquariumWidth: Number.POSITIVE_INFINITY },
       thumbnailDataUrl: null,
     })

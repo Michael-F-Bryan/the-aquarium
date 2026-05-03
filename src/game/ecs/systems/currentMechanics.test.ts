@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { minimalFish, minimalState, testParams } from '../../test/fixtures'
+import { makeTestFish, minimalGameSnapshotPayload, testParams } from '../../test/fixtures'
 import { selectUpdateResult } from '../selectors'
 import { hydrateAquariumRuntimeFromPayload } from '../world'
 import { applySocialSteeringSystem, resolveFlakeEatingSystem } from './currentMechanics'
 
 describe('ECS current mechanics systems', () => {
   it('applies social steering without NaN velocities', () => {
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       currentDay: 60,
       liveFish: [
-        minimalFish({
+        makeTestFish({
           id: 'a',
           species: 'normal',
           lastAte: 59.5,
@@ -18,7 +18,7 @@ describe('ECS current mechanics systems', () => {
             velocity: { x: 10, y: 0 },
           },
         }),
-        minimalFish({
+        makeTestFish({
           id: 'b',
           species: 'normal',
           lastAte: 59.5,
@@ -49,10 +49,10 @@ describe('ECS current mechanics systems', () => {
 
   it('resolves flake eating: hungry fish near food gains health and food is removed', () => {
     const params = testParams()
-    const state = minimalState({
+    const state = minimalGameSnapshotPayload({
       currentDay: 5,
       liveFish: [
-        minimalFish({
+        makeTestFish({
           id: 'a',
           lastAte: -1,
           health: 2,

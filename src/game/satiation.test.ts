@@ -5,7 +5,7 @@ import {
   fishWantsFood,
   hungryWithinLastDay,
 } from './satiation'
-import { minimalFish } from './test/fixtures'
+import { makeTestFish } from './test/fixtures'
 
 describe('satiation', () => {
   it('hungryWithinLastDay is true when never ate', () => {
@@ -26,8 +26,8 @@ describe('satiation', () => {
   })
 
   it('fishWantsFood respects health', () => {
-    const dead = minimalFish({ health: 0 })
+    const dead = makeTestFish({ health: 0 })
     expect(fishWantsFood(dead, 10, 1)).toBe(false)
-    expect(fishWantsFood(minimalFish({ health: 1 }), 10, 1)).toBe(true)
+    expect(fishWantsFood(makeTestFish({ health: 1 }), 10, 1)).toBe(true)
   })
 })

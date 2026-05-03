@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { FishEntity, FoodEntity } from './components'
-import { minimalFish, minimalGameSnapshotPayload, testParams } from '../test/fixtures'
+import { makeTestFish, minimalGameSnapshotPayload, testParams } from '../test/fixtures'
 import { hydrateAquariumRuntimeFromPayload } from './world'
 import { selectGameSnapshotPayload } from './selectors'
 
 describe('ECS selectors', () => {
   it('projects live world entities back to GameSnapshotPayload', () => {
-    const fish = minimalFish({ id: 'fish-a', health: 3 })
+    const fish = makeTestFish({ id: 'fish-a', health: 3 })
     const snapshot = minimalGameSnapshotPayload({
       liveFish: [fish],
       food: [
