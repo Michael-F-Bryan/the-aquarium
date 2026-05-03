@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { minimalFish, minimalState, testParams } from '../test/fixtures'
-import { createAquariumRuntime } from './world'
-import { selectState } from './selectors'
+import type { FishEntity, FoodEntity } from './components'
+import { minimalFish, minimalGameSnapshotPayload, testParams } from '../test/fixtures'
+import { hydrateAquariumRuntimeFromPayload } from './world'
+import { selectGameSnapshotPayload } from './selectors'
 
 describe('ECS selectors', () => {
-  it('projects live world entities back to State', () => {
+  it('projects live world entities back to GameSnapshotPayload', () => {
     const fish = minimalFish({ id: 'fish-a', health: 3 })
-    const state = minimalState({
+    const snapshot = minimalGameSnapshotPayload({
       liveFish: [fish],
       food: [
         {
@@ -20,17 +21,27 @@ describe('ECS selectors', () => {
       ],
     })
 
-    const runtime = createAquariumRuntime(state, testParams(), 0)
-    const fishEntity = runtime.world.with('fish').first
-    const foodEntity = runtime.world.with('food').first
+    const runtime = hydrateAquariumRuntimeFromPayload(snapshot, testParams(), 0)
+    const fishEntity = runtime.world
+      .with(
+        'tagLive',
+        'fishIdentity',
+        'fishBody',
+        'fishMetabolism',
+        'fishAppearance',
+        'fishPhysics',
+      )
+      .first as FishEntity | undefined
+    const foodEntity = runtime.world.with('foodIdentity', 'foodPhysics')
+      .first as FoodEntity | undefined
 
     expect(fishEntity).toBeDefined()
     expect(foodEntity).toBeDefined()
 
-    fishEntity!.fish.health = 2
+    fishEntity!.fishBody.health = 2
     runtime.world.remove(foodEntity!)
 
-    const projected = selectState(runtime)
+    const projected = selectGameSnapshotPayload(runtime)
     expect(projected.liveFish).toEqual([{ ...fish, health: 2 }])
     expect(projected.food).toEqual([])
   })

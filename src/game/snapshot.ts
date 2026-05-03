@@ -1,15 +1,15 @@
-import type { FishAppearance, FishGender, State } from './types'
+import type { FishAppearance, FishGender, GameSnapshotPayload } from './types'
 
-/** Bump when persisted `State` shape changes (save/load, dev JSON). */
+/** Bump when persisted snapshot payload shape changes (save/load, dev JSON). */
 export const GAME_SNAPSHOT_SCHEMA_VERSION = 3 as const
 
 export type GameSnapshotV3 = {
   schemaVersion: typeof GAME_SNAPSHOT_SCHEMA_VERSION
-  state: State
+  state: GameSnapshotPayload
 }
 
 export type ParseSnapshotResult =
-  | { ok: true; state: State }
+  | { ok: true; payload: GameSnapshotPayload }
   | { ok: false; error: string }
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -39,7 +39,7 @@ function bool(x: unknown, label: string): boolean {
   return x
 }
 
-function physics(x: unknown, label: string): State['liveFish'][0]['physics'] {
+function physics(x: unknown, label: string): GameSnapshotPayload['liveFish'][0]['physics'] {
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   const position = x.position
   const velocity = x.velocity
@@ -76,7 +76,7 @@ function parseAppearance(x: unknown, label: string): FishAppearance {
   }
 }
 
-function fish(x: unknown, label: string): State['liveFish'][0] {
+function fish(x: unknown, label: string): GameSnapshotPayload['liveFish'][0] {
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   const species = str(x.species, `${label}.species`)
   if (species !== 'normal' && species !== 'carnivore') {
@@ -97,12 +97,12 @@ function fish(x: unknown, label: string): State['liveFish'][0] {
   }
 }
 
-function fishDeathCause(x: unknown): State['deadFish'][0]['deathCause'] {
+function fishDeathCause(x: unknown): GameSnapshotPayload['deadFish'][0]['deathCause'] {
   if (x === 'predation') return 'predation'
   return 'starvation'
 }
 
-function deadFish(x: unknown, label: string): State['deadFish'][0] {
+function deadFish(x: unknown, label: string): GameSnapshotPayload['deadFish'][0] {
   const f = fish(x, label)
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   return {
@@ -112,7 +112,7 @@ function deadFish(x: unknown, label: string): State['deadFish'][0] {
   }
 }
 
-function foodPiece(x: unknown, label: string): State['food'][0] {
+function foodPiece(x: unknown, label: string): GameSnapshotPayload['food'][0] {
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   return {
     id: str(x.id, `${label}.id`),
@@ -121,7 +121,7 @@ function foodPiece(x: unknown, label: string): State['food'][0] {
   }
 }
 
-function fishSkeleton(x: unknown, label: string): State['skeletons'][0] {
+function fishSkeleton(x: unknown, label: string): GameSnapshotPayload['skeletons'][0] {
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   return {
     id: str(x.id, `${label}.id`),
@@ -131,7 +131,7 @@ function fishSkeleton(x: unknown, label: string): State['skeletons'][0] {
   }
 }
 
-function parseStateInner(raw: unknown): State {
+function parseSnapshotPayloadInner(raw: unknown): GameSnapshotPayload {
   if (!isRecord(raw)) throw new Error('state must be an object')
   const currentDay = num(raw.currentDay, 'state.currentDay')
   const lastClosedCalendarDayFloor = int(
@@ -171,18 +171,18 @@ export function parseGameSnapshot(json: unknown): ParseSnapshotResult {
         error: `Unsupported schemaVersion ${String(schemaVersion)} (expected ${GAME_SNAPSHOT_SCHEMA_VERSION})`,
       }
     }
-    const state = parseStateInner(json.state)
-    return { ok: true, state }
+    const payload = parseSnapshotPayloadInner(json.state)
+    return { ok: true, payload }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return { ok: false, error: msg }
   }
 }
 
-export function serializeGameSnapshot(state: State): string {
-  const payload: GameSnapshotV3 = {
+export function serializeGameSnapshot(snapshot: GameSnapshotPayload): string {
+  const envelope: GameSnapshotV3 = {
     schemaVersion: GAME_SNAPSHOT_SCHEMA_VERSION,
-    state,
+    state: snapshot,
   }
-  return JSON.stringify(payload, null, 2)
+  return JSON.stringify(envelope, null, 2)
 }

@@ -1,5 +1,4 @@
 import type { Params } from '../params'
-import type { State } from '../types'
 import {
   applySimulationCommandsWithResults,
   type SimulationCommand,
@@ -18,10 +17,10 @@ import {
   sinkAndPruneSkeletonsSystem,
   type SimulationSystem,
 } from './systems'
-import { createAquariumRuntime } from './world'
+import { syncAquariumRuntimeForStep, type AquariumRuntime } from './world'
 
 export type SimulationStepInput = {
-  readonly state: State
+  readonly runtime: AquariumRuntime
   readonly params: Params
   readonly deltaMs: number
   readonly commands?: readonly SimulationCommand[]
@@ -41,20 +40,16 @@ export const simulationSchedule: readonly SimulationSystem[] = [
 ]
 
 export function runSimulationStep(input: SimulationStepInput) {
+  syncAquariumRuntimeForStep(input.runtime, input.params, input.deltaMs)
+  input.runtime.simulationEntity.events.length = 0
   const commandApplication = applySimulationCommandsWithResults(
-    input.state,
+    input.runtime,
     input.params,
     input.commands,
   )
-  const runtime = createAquariumRuntime(
-    commandApplication.state,
-    input.params,
-    input.deltaMs,
-  )
-
   for (const system of simulationSchedule) {
-    system.run(runtime)
+    system.run(input.runtime)
   }
 
-  return selectUpdateResult(runtime, commandApplication.commandResults)
+  return selectUpdateResult(input.runtime, commandApplication.commandResults)
 }

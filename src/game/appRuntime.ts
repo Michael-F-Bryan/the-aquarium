@@ -4,8 +4,8 @@ import type {
   SimulationCommandResult,
 } from './ecs/commands'
 import type { SimulationStepResult } from './ecs/selectors'
+import type { AquariumRuntime } from './ecs/world'
 import type { Params } from './params'
-import type { State } from './types'
 
 export type WorldSize = {
   readonly width: number
@@ -21,7 +21,7 @@ export type AppRuntimeCommandOutcome<TMeta = never> = QueuedSimulationCommand<TM
   SimulationCommandResult
 
 export type AppRuntimeStepInput<TMeta = never> = {
-  readonly state: State
+  readonly runtime: AquariumRuntime
   readonly params: Params
   readonly worldSize: WorldSize
   readonly deltaMs: number
@@ -64,7 +64,7 @@ export function stepAppRuntime<TMeta = never>(
   const params = mergeRuntimeParams(input.params, input.worldSize)
   const queuedCommands = input.commands ?? []
   const result = runSimulationStep({
-    state: input.state,
+    runtime: input.runtime,
     params,
     deltaMs: input.deltaMs,
     commands: queuedCommands.map((queued) => queued.command),

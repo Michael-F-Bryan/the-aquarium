@@ -1,6 +1,18 @@
 import type { SimulationEvent } from '../events'
 import type { Params } from '../params'
-import type { DeadFish, Fish, FishSkeleton, Food, State } from '../types'
+import type {
+  FishAppearance,
+  GameSnapshotPayload,
+  Physics,
+} from '../types'
+import type {
+  DeadFishMeta,
+  FishBody,
+  FishIdentity,
+  FishMetabolism,
+  FoodIdentity,
+  SkeletonIdentity,
+} from './entityAssembly'
 
 export type SimulationClock = {
   readonly deltaMs: number
@@ -10,34 +22,55 @@ export type SimulationClock = {
 
 export type SimulationComponent = SimulationClock & {
   readonly params: Params
-  currentDay: State['currentDay']
-  lastClosedCalendarDayFloor: State['lastClosedCalendarDayFloor']
-  nextEntityId: State['nextEntityId']
-  rngState: State['rngState']
-  score: State['score']
+  currentDay: GameSnapshotPayload['currentDay']
+  lastClosedCalendarDayFloor: GameSnapshotPayload['lastClosedCalendarDayFloor']
+  nextEntityId: GameSnapshotPayload['nextEntityId']
+  rngState: GameSnapshotPayload['rngState']
+  score: GameSnapshotPayload['score']
 }
-
-export type FishComponent = Fish
-export type DeadFishComponent = DeadFish
-export type FishSkeletonComponent = FishSkeleton
-export type FoodComponent = Food
 
 export type SimulationStateEntity = {
   simulation: SimulationComponent
   events: SimulationEvent[]
 }
 
+/** Runtime entity: optional Miniplex component keys (fine-grained). */
 export type AquariumEntity = {
   simulation?: SimulationComponent
   events?: SimulationEvent[]
-  fish?: FishComponent
-  deadFish?: DeadFishComponent
-  skeleton?: FishSkeletonComponent
-  food?: FoodComponent
+  fishIdentity?: FishIdentity
+  fishBody?: FishBody
+  fishMetabolism?: FishMetabolism
+  fishAppearance?: FishAppearance
+  fishPhysics?: Physics
+  deadFishMeta?: DeadFishMeta
+  foodIdentity?: FoodIdentity
+  foodPhysics?: Physics
+  skeletonIdentity?: SkeletonIdentity
+  skeletonPhysics?: Physics
+  /** Live fish only; corpses use `deadFishMeta` without this tag. */
+  tagLive?: true
 }
 
 export type SimulationEntity = AquariumEntity & SimulationStateEntity
-export type FishEntity = AquariumEntity & { fish: FishComponent }
-export type DeadFishEntity = AquariumEntity & { deadFish: DeadFishComponent }
-export type FishSkeletonEntity = AquariumEntity & { skeleton: FishSkeletonComponent }
-export type FoodEntity = AquariumEntity & { food: FoodComponent }
+
+export type FishEntity = AquariumEntity & {
+  tagLive: true
+  fishIdentity: FishIdentity
+  fishBody: FishBody
+  fishMetabolism: FishMetabolism
+  fishAppearance: FishAppearance
+  fishPhysics: Physics
+}
+
+export type DeadFishEntity = FishEntity & { deadFishMeta: DeadFishMeta }
+
+export type FishSkeletonEntity = AquariumEntity & {
+  skeletonIdentity: SkeletonIdentity
+  skeletonPhysics: Physics
+}
+
+export type FoodEntity = AquariumEntity & {
+  foodIdentity: FoodIdentity
+  foodPhysics: Physics
+}

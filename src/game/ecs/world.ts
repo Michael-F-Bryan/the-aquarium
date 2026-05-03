@@ -1,7 +1,14 @@
 import { World } from 'miniplex'
+import { createInitialGameSnapshotPayload } from '../initial'
 import type { Params } from '../params'
-import type { DeadFish, Fish, FishSkeleton, Food, Physics, State } from '../types'
+import type { DeadFish, Fish, FishSkeleton, Food, GameSnapshotPayload, Physics } from '../types'
 import type { AquariumEntity, SimulationEntity } from './components'
+import {
+  deadFishEntityFromDto,
+  foodEntityFromDto,
+  liveFishEntityFromDto,
+  skeletonEntityFromDto,
+} from './entityAssembly'
 
 export type AquariumRuntime = {
   readonly world: World<AquariumEntity>
@@ -45,43 +52,72 @@ function cloneFood(food: Food): Food {
   }
 }
 
-export function createAquariumRuntime(
-  state: State,
-  params: Params,
-  deltaMs: number,
-): AquariumRuntime {
-  const clampedDeltaMs = Math.min(Math.max(deltaMs, 0), 250)
-  const world = new World<AquariumEntity>()
+function populateWorldFromPayload(
+  world: World<AquariumEntity>,
+  payload: GameSnapshotPayload,
+): SimulationEntity {
   const simulationEntity = world.add({
     simulation: {
-      params,
-      deltaMs,
-      clampedDeltaMs,
-      dayAdvance: clampedDeltaMs / params.dayLengthMs,
-      currentDay: state.currentDay,
-      lastClosedCalendarDayFloor: state.lastClosedCalendarDayFloor,
-      nextEntityId: state.nextEntityId,
-      rngState: state.rngState,
-      score: state.score,
+      params: {} as Params,
+      deltaMs: 0,
+      clampedDeltaMs: 0,
+      dayAdvance: 0,
+      currentDay: payload.currentDay,
+      lastClosedCalendarDayFloor: payload.lastClosedCalendarDayFloor,
+      nextEntityId: payload.nextEntityId,
+      rngState: payload.rngState,
+      score: payload.score,
     },
     events: [],
   }) as SimulationEntity
 
-  for (const fish of state.liveFish) {
-    world.add({ fish: cloneFish(fish) })
+  for (const fish of payload.liveFish) {
+    world.add(liveFishEntityFromDto(cloneFish(fish)))
   }
-  for (const deadFish of state.deadFish) {
-    world.add({ deadFish: cloneDeadFish(deadFish) })
+  for (const deadFish of payload.deadFish) {
+    world.add(deadFishEntityFromDto(cloneDeadFish(deadFish)))
   }
-  for (const skeleton of state.skeletons) {
-    world.add({ skeleton: cloneSkeleton(skeleton) })
+  for (const skeleton of payload.skeletons) {
+    world.add(skeletonEntityFromDto(cloneSkeleton(skeleton)))
   }
-  for (const food of state.food) {
-    world.add({ food: cloneFood(food) })
+  for (const food of payload.food) {
+    world.add(foodEntityFromDto(cloneFood(food)))
   }
 
-  return {
-    world,
-    simulationEntity,
-  }
+  return simulationEntity
+}
+
+/** Build a new world from a persisted or read-model payload (load / new game). */
+export function hydrateAquariumRuntimeFromPayload(
+  payload: GameSnapshotPayload,
+  params: Params,
+  deltaMs: number,
+): AquariumRuntime {
+  const world = new World<AquariumEntity>()
+  const simulationEntity = populateWorldFromPayload(world, payload)
+  syncAquariumRuntimeForStep({ world, simulationEntity }, params, deltaMs)
+  return { world, simulationEntity }
+}
+
+/** New game from params (starter fish + empty tank). */
+export function createInitialAquariumRuntime(params: Params): AquariumRuntime {
+  return hydrateAquariumRuntimeFromPayload(
+    createInitialGameSnapshotPayload(params.aquariumWidth, params.aquariumHeight),
+    params,
+    0,
+  )
+}
+
+/** Update per-frame clock fields on the singleton simulation entity (no entity rebuild). */
+export function syncAquariumRuntimeForStep(
+  runtime: AquariumRuntime,
+  params: Params,
+  deltaMs: number,
+): void {
+  const clampedDeltaMs = Math.min(Math.max(deltaMs, 0), 250)
+  const sim = runtime.simulationEntity.simulation
+  sim.params = params
+  sim.deltaMs = deltaMs
+  sim.clampedDeltaMs = clampedDeltaMs
+  sim.dayAdvance = clampedDeltaMs / params.dayLengthMs
 }

@@ -1,7 +1,8 @@
 import { chooseAutoplayFoodDrop } from '../autoplay/policy'
-import { dropFlakeFoodWithResult } from '../mechanics/foodDrop'
 import type { Params } from '../params'
-import type { State } from '../types'
+import { dropFlakeFoodOnRuntime } from './applyFoodDrop'
+import { buildGameSnapshotPayload } from './snapshotPayload'
+import type { AquariumRuntime } from './world'
 
 export type DropFoodCommand = {
   readonly type: 'drop-food'
@@ -36,22 +37,19 @@ export type SimulationCommandResult = {
 }
 
 export type ApplySimulationCommandsResult = {
-  readonly state: State
   readonly commandResults: readonly SimulationCommandResult[]
 }
 
 export function applySimulationCommandsWithResults(
-  state: State,
+  runtime: AquariumRuntime,
   params: Params,
   commands: readonly SimulationCommand[] = [],
 ): ApplySimulationCommandsResult {
-  let next = state
   const commandResults: SimulationCommandResult[] = []
   for (const command of commands) {
     switch (command.type) {
       case 'drop-food': {
-        const drop = dropFlakeFoodWithResult(next, params, command.x, command.y)
-        next = drop.state
+        const drop = dropFlakeFoodOnRuntime(runtime, params, command.x, command.y)
         commandResults.push({
           command,
           applied: drop.applied,
@@ -61,10 +59,11 @@ export function applySimulationCommandsWithResults(
         break
       }
       case 'autoplay-drop-food': {
-        const atDay = next.currentDay
-        const liveFishCount = next.liveFish.length
-        const foodCount = next.food.length
-        const decision = chooseAutoplayFoodDrop(next, params)
+        const snap = buildGameSnapshotPayload(runtime)
+        const atDay = snap.currentDay
+        const liveFishCount = snap.liveFish.length
+        const foodCount = snap.food.length
+        const decision = chooseAutoplayFoodDrop(snap, params)
         if (!decision) {
           commandResults.push({
             command,
@@ -76,8 +75,7 @@ export function applySimulationCommandsWithResults(
           })
           break
         }
-        const drop = dropFlakeFoodWithResult(next, params, decision.x, decision.y)
-        next = drop.state
+        const drop = dropFlakeFoodOnRuntime(runtime, params, decision.x, decision.y)
         commandResults.push({
           command,
           applied: drop.applied,
@@ -92,5 +90,5 @@ export function applySimulationCommandsWithResults(
       }
     }
   }
-  return { state: next, commandResults }
+  return { commandResults }
 }

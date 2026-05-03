@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { NEVER_ATE } from '../satiation'
-import { makeTestFish, minimalState, testParams } from '../test/fixtures'
+import { makeTestFish, minimalGameSnapshotPayload, testParams } from '../test/fixtures'
+import { buildGameSnapshotPayload } from './snapshotPayload'
 import { applySimulationCommandsWithResults } from './commands'
+import { hydrateAquariumRuntimeFromPayload } from './world'
 
 describe('applySimulationCommandsWithResults', () => {
   it('reports rejected food drops with an explicit command outcome', () => {
-    const state = minimalState({
+    const snapshot = minimalGameSnapshotPayload({
       nextEntityId: 2,
       food: [
         {
@@ -19,13 +21,15 @@ describe('applySimulationCommandsWithResults', () => {
       ],
     })
     const params = testParams({ minFoodSeparation: 50 })
+    const runtime = hydrateAquariumRuntimeFromPayload(snapshot, params, 0)
 
-    const result = applySimulationCommandsWithResults(state, params, [
+    const result = applySimulationCommandsWithResults(runtime, params, [
       { type: 'drop-food', x: 120, y: 100 },
     ])
 
-    expect(result.state.food).toHaveLength(1)
-    expect(result.state.nextEntityId).toBe(2)
+    const out = buildGameSnapshotPayload(runtime)
+    expect(out.food).toHaveLength(1)
+    expect(out.nextEntityId).toBe(2)
     expect(result.commandResults).toEqual([
       {
         command: { type: 'drop-food', x: 120, y: 100 },
@@ -44,7 +48,7 @@ describe('applySimulationCommandsWithResults', () => {
         velocity: { x: 0, y: 0 },
       },
     })
-    const state = minimalState({
+    const snapshot = minimalGameSnapshotPayload({
       currentDay: 4,
       nextEntityId: 10,
       liveFish: [hungryFish],
@@ -53,13 +57,14 @@ describe('applySimulationCommandsWithResults', () => {
       foodPickupRadius: 20,
       minFoodSeparation: 5,
     })
+    const runtime = hydrateAquariumRuntimeFromPayload(snapshot, params, 0)
 
-    const result = applySimulationCommandsWithResults(state, params, [
+    const result = applySimulationCommandsWithResults(runtime, params, [
       { type: 'drop-food', x: 200, y: 120 },
       { type: 'autoplay-drop-food' },
     ])
 
-    expect(result.state.food).toHaveLength(1)
+    expect(buildGameSnapshotPayload(runtime).food).toHaveLength(1)
     expect(result.commandResults).toEqual([
       {
         command: { type: 'drop-food', x: 200, y: 120 },

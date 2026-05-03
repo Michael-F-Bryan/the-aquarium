@@ -1,4 +1,4 @@
-import type { State } from '../../game/types'
+import type { GameSnapshotPayload } from '../../game/types'
 import { DeadFishEntity, LiveFishEntity } from './FishEntity'
 import { FoodEntity } from './FoodEntity'
 import type { AquariumSize } from './pointer'
@@ -6,7 +6,7 @@ import { SkeletonEntity } from './SkeletonEntity'
 import { TankBackdrop } from './TankBackdrop'
 
 type AquariumSceneProps = {
-  readonly state: State
+  readonly state: GameSnapshotPayload
   readonly aquariumSize: AquariumSize
 }
 

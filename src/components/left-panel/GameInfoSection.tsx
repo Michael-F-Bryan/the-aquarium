@@ -1,7 +1,7 @@
-import type { State } from '../../game/types'
+import type { GameSnapshotPayload } from '../../game/types'
 
 type Props = {
-  state: State
+  state: GameSnapshotPayload
 }
 
 export function GameInfoSection({ state }: Props) {
@@ -28,6 +28,6 @@ export function GameInfoSection({ state }: Props) {
   )
 }
 
-function liveBiomassG(state: State): number {
+function liveBiomassG(state: GameSnapshotPayload): number {
   return state.liveFish.reduce((acc, fish) => acc + fish.weightG, 0)
 }

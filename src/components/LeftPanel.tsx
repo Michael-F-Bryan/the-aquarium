@@ -1,11 +1,11 @@
 import { AutoplayDebugSection } from './left-panel/AutoplayDebugSection'
 import { GameInfoSection } from './left-panel/GameInfoSection'
-import type { State } from '../game/types'
+import type { GameSnapshotPayload } from '../game/types'
 import { DevSnapshotControls } from './left-panel/DevSnapshotControls'
 
 type Props = {
-  state: State
-  onReplaceGameState: (state: State) => void
+  state: GameSnapshotPayload
+  onReplaceGameState: (state: GameSnapshotPayload) => void
   autoplayEnabled: boolean
   autoplayIntervalMs: number
   autoplayLogCount: number

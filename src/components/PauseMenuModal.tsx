@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
+import { useState, type Dispatch, type SetStateAction } from 'react'
 import type { Params } from '../game/params'
 import { DebugControlsSection } from './left-panel/DebugControlsSection'
 
@@ -28,10 +28,6 @@ export function PauseMenuModal({
   onNewGame,
 }: Props) {
   const [panel, setPanel] = useState<PausePanel>('main')
-
-  useEffect(() => {
-    if (!open) setPanel('main')
-  }, [open])
 
   if (!open) return null
 

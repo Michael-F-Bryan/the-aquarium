@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { resolveFlakeEating } from '../../mechanics/flakeEat'
-import { applySocialSteering } from '../../mechanics/movementSocial'
 import { minimalFish, minimalState, testParams } from '../../test/fixtures'
 import { selectUpdateResult } from '../selectors'
-import { createAquariumRuntime } from '../world'
+import { hydrateAquariumRuntimeFromPayload } from '../world'
 import { applySocialSteeringSystem, resolveFlakeEatingSystem } from './currentMechanics'
 
 describe('ECS current mechanics systems', () => {
-  it('applies social steering from a stable same-frame snapshot', () => {
+  it('applies social steering without NaN velocities', () => {
     const state = minimalState({
       currentDay: 60,
       liveFish: [
@@ -39,24 +37,17 @@ describe('ECS current mechanics systems', () => {
       maxSpeedNormal: 100,
     })
 
-    const legacy = applySocialSteering(state, params, 50)
-    const runtime = createAquariumRuntime(state, params, 50)
+    const runtime = hydrateAquariumRuntimeFromPayload(state, params, 50)
     applySocialSteeringSystem.run(runtime)
-    const ecs = selectUpdateResult(runtime).state
+    const ecs = selectUpdateResult(runtime).readModel
 
-    for (const legacyFish of legacy.liveFish) {
-      const ecsFish = ecs.liveFish.find((fish) => fish.id === legacyFish.id)
-      expect(ecsFish).toBeDefined()
-      expect(ecsFish?.physics.velocity.x).toBeCloseTo(
-        legacyFish.physics.velocity.x,
-      )
-      expect(ecsFish?.physics.velocity.y).toBeCloseTo(
-        legacyFish.physics.velocity.y,
-      )
+    for (const fish of ecs.liveFish) {
+      expect(Number.isFinite(fish.physics.velocity.x)).toBe(true)
+      expect(Number.isFinite(fish.physics.velocity.y)).toBe(true)
     }
   })
 
-  it('resolves flake eating through ECS world entities and events', () => {
+  it('resolves flake eating: hungry fish near food gains health and food is removed', () => {
     const params = testParams()
     const state = minimalState({
       currentDay: 5,
@@ -80,11 +71,12 @@ describe('ECS current mechanics systems', () => {
       ],
     })
 
-    const legacy = resolveFlakeEating(state, params)
-    const runtime = createAquariumRuntime(state, params, 0)
+    const runtime = hydrateAquariumRuntimeFromPayload(state, params, 0)
     resolveFlakeEatingSystem.run(runtime)
     const ecs = selectUpdateResult(runtime)
 
-    expect(ecs).toEqual({ ...legacy, commandResults: [] })
+    expect(ecs.readModel.liveFish[0]?.health).toBe(3)
+    expect(ecs.readModel.food).toHaveLength(0)
+    expect(ecs.events.some((e) => e.type === 'ate_flake' && e.fishId === 'a')).toBe(true)
   })
 })

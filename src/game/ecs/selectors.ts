@@ -1,10 +1,11 @@
 import type { SimulationEvent } from '../events'
-import type { DeadFish, Fish, FishSkeleton, Food, State } from '../types'
+import type { DeadFish, Fish, FishSkeleton, Food, GameSnapshotPayload } from '../types'
 import type { SimulationCommandResult } from './commands'
+import { buildGameSnapshotPayload } from './snapshotPayload'
 import type { AquariumRuntime } from './world'
 
 export type SimulationStepResult = {
-  readonly state: State
+  readonly readModel: GameSnapshotPayload
   readonly events: readonly SimulationEvent[]
   readonly commandResults: readonly SimulationCommandResult[]
 }
@@ -19,19 +20,8 @@ export type AquariumReadModel = {
   readonly food: readonly Food[]
 }
 
-export function selectState(runtime: AquariumRuntime): State {
-  const simulation = runtime.simulationEntity.simulation
-  return {
-    currentDay: simulation.currentDay,
-    lastClosedCalendarDayFloor: simulation.lastClosedCalendarDayFloor,
-    nextEntityId: simulation.nextEntityId,
-    rngState: simulation.rngState,
-    score: simulation.score,
-    liveFish: runtime.world.with('fish').entities.map((entity) => entity.fish),
-    deadFish: runtime.world.with('deadFish').entities.map((entity) => entity.deadFish),
-    skeletons: runtime.world.with('skeleton').entities.map((entity) => entity.skeleton),
-    food: runtime.world.with('food').entities.map((entity) => entity.food),
-  }
+export function selectGameSnapshotPayload(runtime: AquariumRuntime): GameSnapshotPayload {
+  return buildGameSnapshotPayload(runtime)
 }
 
 export function selectEvents(runtime: AquariumRuntime): readonly SimulationEvent[] {
@@ -39,15 +29,15 @@ export function selectEvents(runtime: AquariumRuntime): readonly SimulationEvent
 }
 
 export function selectReadModel(runtime: AquariumRuntime): AquariumReadModel {
-  const state = selectState(runtime)
+  const payload = buildGameSnapshotPayload(runtime)
   return {
-    currentDay: state.currentDay,
-    lastClosedCalendarDayFloor: state.lastClosedCalendarDayFloor,
-    score: state.score,
-    liveFish: state.liveFish,
-    deadFish: state.deadFish,
-    skeletons: state.skeletons,
-    food: state.food,
+    currentDay: payload.currentDay,
+    lastClosedCalendarDayFloor: payload.lastClosedCalendarDayFloor,
+    score: payload.score,
+    liveFish: payload.liveFish,
+    deadFish: payload.deadFish,
+    skeletons: payload.skeletons,
+    food: payload.food,
   }
 }
 
@@ -56,7 +46,7 @@ export function selectUpdateResult(
   commandResults: readonly SimulationCommandResult[] = [],
 ): SimulationStepResult {
   return {
-    state: selectState(runtime),
+    readModel: buildGameSnapshotPayload(runtime),
     events: selectEvents(runtime),
     commandResults,
   }

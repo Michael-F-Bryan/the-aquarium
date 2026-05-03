@@ -4,7 +4,7 @@ import {
   parseGameSnapshot,
   serializeGameSnapshot,
 } from './snapshot'
-import type { State } from './types'
+import type { GameSnapshotPayload } from './types'
 
 /** localStorage key for bundled autosave (thumbnail + state + params). */
 export const AUTOSAVE_STORAGE_KEY = 'the-aquarium-autosave-v1'
@@ -22,7 +22,7 @@ export type AutosaveBundle = {
 }
 
 export function buildAutosaveJson(options: {
-  state: State
+  snapshot: GameSnapshotPayload
   params: Params
   thumbnailDataUrl: string | null
 }): string {
@@ -31,14 +31,14 @@ export function buildAutosaveJson(options: {
     savedAt: new Date().toISOString(),
     thumbnailDataUrl: options.thumbnailDataUrl,
     gameSchemaVersion: GAME_SNAPSHOT_SCHEMA_VERSION,
-    game: JSON.parse(serializeGameSnapshot(options.state)) as unknown,
+    game: JSON.parse(serializeGameSnapshot(options.snapshot)) as unknown,
     params: options.params,
   }
   return JSON.stringify(bundle)
 }
 
 export type LoadAutosaveResult =
-  | { ok: true; state: State; params: Params; thumbnailDataUrl: string | null }
+  | { ok: true; snapshot: GameSnapshotPayload; params: Params; thumbnailDataUrl: string | null }
   | { ok: false; error: string }
 
 function parseSavedParams(raw: unknown): Params {
@@ -77,7 +77,7 @@ export function parseAutosaveJson(raw: string): LoadAutosaveResult {
         : null
     return {
       ok: true,
-      state: gameParsed.state,
+      snapshot: gameParsed.payload,
       params,
       thumbnailDataUrl: thumb,
     }

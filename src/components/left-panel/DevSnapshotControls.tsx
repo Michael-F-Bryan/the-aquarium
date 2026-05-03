@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react'
 import { parseGameSnapshot, serializeGameSnapshot } from '../../game/snapshot'
-import type { State } from '../../game/types'
+import type { GameSnapshotPayload } from '../../game/types'
 
 type Props = {
-  gameState: State
-  onReplaceGameState: (state: State) => void
+  gameState: GameSnapshotPayload
+  onReplaceGameState: (state: GameSnapshotPayload) => void
 }
 
 /** Dev-only: load arbitrary game state from JSON for QA and repros. */
@@ -21,7 +21,7 @@ export function DevSnapshotControls({ gameState, onReplaceGameState }: Props) {
         setError(r.error)
         return
       }
-      onReplaceGameState(r.state)
+      onReplaceGameState(r.payload)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }

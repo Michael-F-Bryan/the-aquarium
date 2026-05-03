@@ -1,6 +1,3 @@
-import { createInitialState } from './initial'
-import type { Params } from './params'
-
 export type FishSkeleton = {
   id: string
   preyName: string
@@ -9,7 +6,8 @@ export type FishSkeleton = {
   createdOnDay: number
 }
 
-export type State = {
+/** Serializable game snapshot (DTO): persistence, dev JSON, React read model. */
+export type GameSnapshotPayload = {
   /** Fractional simulated day; `Math.floor` is the calendar day index in flight. */
   currentDay: number
   /**
@@ -31,7 +29,7 @@ export type State = {
 export type Food = {
   id: string
   physics: Physics
-  /** `state.currentDay` when the flake was dropped (fractional). */
+  /** Fractional `currentDay` when the flake was dropped. */
   createdOnDay: number
 }
 
@@ -82,8 +80,4 @@ export type Physics = {
     x: number
     y: number
   }
-}
-
-export function newGameState(params: Params): State {
-  return createInitialState(params.aquariumWidth, params.aquariumHeight)
 }

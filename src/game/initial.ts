@@ -1,7 +1,8 @@
 import { rollAppearance } from './appearance'
 import { pickFishName } from './data/fishNames'
+import type { Params } from './params'
 import { NEVER_ATE } from './satiation'
-import type { Fish, State } from './types'
+import type { Fish, GameSnapshotPayload } from './types'
 
 function phys(x: number, y: number, vx = 0, vy = 0) {
   return {
@@ -11,10 +12,10 @@ function phys(x: number, y: number, vx = 0, vy = 0) {
 }
 
 /** One baby fish; centered in the tank with randomised name and appearance. */
-export function createInitialState(
+export function createInitialGameSnapshotPayload(
   aquariumWidth: number,
   aquariumHeight: number,
-): State {
+): GameSnapshotPayload {
   const cx = aquariumWidth / 2
   const cy = aquariumHeight / 2
   let rngState = 0x9e3779b9
@@ -46,4 +47,10 @@ export function createInitialState(
     skeletons: [],
     food: [],
   }
+}
+
+export function createInitialGameSnapshotPayloadFromParams(
+  params: Params,
+): GameSnapshotPayload {
+  return createInitialGameSnapshotPayload(params.aquariumWidth, params.aquariumHeight)
 }

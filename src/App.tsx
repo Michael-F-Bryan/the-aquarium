@@ -11,12 +11,18 @@ import {
   type LoadAutosaveResult,
 } from './game/autosave'
 import { defaultParams, type Params } from './game/params'
-import { newGameState, type State } from './game/types'
+import type { GameSnapshotPayload } from './game/types'
 import {
   createAppRuntimeCommandQueue,
   mergeRuntimeParams,
   stepAppRuntime,
 } from './game/appRuntime'
+import { buildGameSnapshotPayload } from './game/ecs/snapshotPayload'
+import {
+  createInitialAquariumRuntime,
+  hydrateAquariumRuntimeFromPayload,
+  type AquariumRuntime,
+} from './game/ecs/world'
 import {
   buildAutoplayLogJson,
   type AutoplayLogEntry,
@@ -30,7 +36,8 @@ type AppRuntimeCommandMeta = {
 
 type AppBootstrap = {
   params: Params
-  gameState: State
+  runtime: AquariumRuntime
+  gameSnapshot: GameSnapshotPayload
   worldSize: { width: number; height: number }
   selectedId: string | null
   autosaveThumb: string | null
@@ -40,33 +47,46 @@ type AppBootstrap = {
 function createAppBootstrap(): AppBootstrap {
   const r = readAutosaveFromStorage()
   if (r.ok) {
-    const selectedId = r.state.liveFish.some((f) => f.id === 'fish-0')
+    const merged = mergeRuntimeParams(r.params, {
+      width: r.params.aquariumWidth,
+      height: r.params.aquariumHeight,
+    })
+    const runtime = hydrateAquariumRuntimeFromPayload(r.snapshot, merged, 0)
+    const gameSnapshot = buildGameSnapshotPayload(runtime)
+    const selectedId = gameSnapshot.liveFish.some((f) => f.id === 'fish-0')
       ? 'fish-0'
-      : (r.state.liveFish[0]?.id ?? null)
+      : (gameSnapshot.liveFish[0]?.id ?? null)
     return {
       params: r.params,
-      gameState: r.state,
+      runtime,
+      gameSnapshot,
       worldSize: {
         width: r.params.aquariumWidth,
         height: r.params.aquariumHeight,
       },
       selectedId,
       autosaveThumb: r.thumbnailDataUrl,
-      lastClosedCalendarDayFloor: r.state.lastClosedCalendarDayFloor,
+      lastClosedCalendarDayFloor: gameSnapshot.lastClosedCalendarDayFloor,
     }
   }
   const params = defaultParams
-  const gameState = newGameState(params)
+  const merged = mergeRuntimeParams(params, {
+    width: params.aquariumWidth,
+    height: params.aquariumHeight,
+  })
+  const runtime = createInitialAquariumRuntime(merged)
+  const gameSnapshot = buildGameSnapshotPayload(runtime)
   return {
     params,
-    gameState,
+    runtime,
+    gameSnapshot,
     worldSize: {
       width: params.aquariumWidth,
       height: params.aquariumHeight,
     },
     selectedId: 'fish-0',
     autosaveThumb: null,
-    lastClosedCalendarDayFloor: gameState.lastClosedCalendarDayFloor,
+    lastClosedCalendarDayFloor: gameSnapshot.lastClosedCalendarDayFloor,
   }
 }
 
@@ -74,7 +94,9 @@ const appBootstrap = createAppBootstrap()
 
 function App() {
   const [params, setParams] = useState<Params>(() => appBootstrap.params)
-  const [gameState, setGameState] = useState<State>(() => appBootstrap.gameState)
+  const [gameState, setGameState] = useState<GameSnapshotPayload>(
+    () => appBootstrap.gameSnapshot,
+  )
   const [worldSize, setWorldSize] = useState(() => appBootstrap.worldSize)
 
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -110,7 +132,8 @@ function App() {
   const pausedRef = useRef(paused)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastClosedRef = useRef(appBootstrap.lastClosedCalendarDayFloor)
-  const gameRef = useRef(appBootstrap.gameState)
+  const simulationRef = useRef<AquariumRuntime>(appBootstrap.runtime)
+  const gameRef = useRef(appBootstrap.gameSnapshot)
   const commandQueueRef = useRef(
     createAppRuntimeCommandQueue<AppRuntimeCommandMeta>(),
   )
@@ -165,14 +188,14 @@ function App() {
       const w = worldRef.current
       const commands = commandQueueRef.current.drain()
       const result = stepAppRuntime({
-        state: gameRef.current,
+        runtime: simulationRef.current,
         params: p,
         worldSize: w,
         deltaMs: rawDelta,
         commands,
       })
-      gameRef.current = result.state
-      setGameState(result.state)
+      gameRef.current = result.readModel
+      setGameState(result.readModel)
 
       for (const ev of result.events) {
         pushToast(formatSimulationEvent(ev))
@@ -180,12 +203,12 @@ function App() {
       for (const outcome of result.commandOutcomes) {
         if (outcome.meta?.type !== 'autoplay-food-drop') continue
         appendAutoplayLog({
-          atDay: outcome.atDay ?? result.state.currentDay,
+          atDay: outcome.atDay ?? result.readModel.currentDay,
           action: outcome.applied ? 'drop' : 'skip',
           reason: outcome.reason ?? (outcome.applied ? 'policy-drop' : 'drop-rejected'),
           targetFishId: outcome.targetFishId,
-          liveFishCount: outcome.liveFishCount ?? result.state.liveFish.length,
-          foodCount: outcome.foodCount ?? result.state.food.length,
+          liveFishCount: outcome.liveFishCount ?? result.readModel.liveFish.length,
+          foodCount: outcome.foodCount ?? result.readModel.food.length,
         })
       }
       if (active) {
@@ -234,7 +257,7 @@ function App() {
 
     try {
       const json = buildAutosaveJson({
-        state: snap,
+        snapshot: snap,
         params: merged,
         thumbnailDataUrl: thumb,
       })
@@ -295,31 +318,40 @@ function App() {
   const applyRestoredAutosave = useCallback(
     (r: Extract<LoadAutosaveResult, { ok: true }>) => {
       commandQueueRef.current.drain()
-      gameRef.current = r.state
-      setGameState(r.state)
+      const merged = mergeRuntimeParams(r.params, {
+        width: r.params.aquariumWidth,
+        height: r.params.aquariumHeight,
+      })
+      simulationRef.current = hydrateAquariumRuntimeFromPayload(r.snapshot, merged, 0)
+      const snap = buildGameSnapshotPayload(simulationRef.current)
+      gameRef.current = snap
+      setGameState(snap)
       setParams(r.params)
       setWorldSize({
         width: r.params.aquariumWidth,
         height: r.params.aquariumHeight,
       })
-      lastClosedRef.current = r.state.lastClosedCalendarDayFloor
+      lastClosedRef.current = snap.lastClosedCalendarDayFloor
       setSelectedId((prev) => {
-        if (prev && r.state.liveFish.some((f) => f.id === prev)) return prev
-        return r.state.liveFish[0]?.id ?? null
+        if (prev && snap.liveFish.some((f) => f.id === prev)) return prev
+        return snap.liveFish[0]?.id ?? null
       })
       setAutosaveThumb(r.thumbnailDataUrl)
     },
     [],
   )
 
-  const handleReplaceGameState = useCallback((next: State) => {
+  const handleReplaceGameState = useCallback((next: GameSnapshotPayload) => {
     commandQueueRef.current.drain()
-    gameRef.current = next
-    setGameState(next)
-    lastClosedRef.current = next.lastClosedCalendarDayFloor
+    const merged = mergeRuntimeParams(paramsRef.current, worldRef.current)
+    simulationRef.current = hydrateAquariumRuntimeFromPayload(next, merged, 0)
+    const snap = buildGameSnapshotPayload(simulationRef.current)
+    gameRef.current = snap
+    setGameState(snap)
+    lastClosedRef.current = snap.lastClosedCalendarDayFloor
     setSelectedId((prev) => {
-      if (prev && next.liveFish.some((f) => f.id === prev)) return prev
-      return next.liveFish[0]?.id ?? null
+      if (prev && snap.liveFish.some((f) => f.id === prev)) return prev
+      return snap.liveFish[0]?.id ?? null
     })
   }, [])
 
@@ -372,7 +404,9 @@ function App() {
       return
     }
     commandQueueRef.current.drain()
-    const next = newGameState(defaultParams)
+    const merged = mergeRuntimeParams(defaultParams, worldRef.current)
+    simulationRef.current = createInitialAquariumRuntime(merged)
+    const next = buildGameSnapshotPayload(simulationRef.current)
     gameRef.current = next
     setGameState(next)
     setParams(defaultParams)
@@ -432,17 +466,19 @@ function App() {
         />
       </div>
 
-      <PauseMenuModal
-        open={paused}
-        hasAutosave={hasAutosave}
-        autosavePreviewUrl={autosaveThumb}
-        params={params}
-        setParams={setParams}
-        onApplyReviewPreset={handleApplyReviewPreset}
-        onResume={handleResume}
-        onLoadAutosave={handleLoadAutosave}
-        onNewGame={handleNewGame}
-      />
+      {paused ? (
+        <PauseMenuModal
+          open
+          hasAutosave={hasAutosave}
+          autosavePreviewUrl={autosaveThumb}
+          params={params}
+          setParams={setParams}
+          onApplyReviewPreset={handleApplyReviewPreset}
+          onResume={handleResume}
+          onLoadAutosave={handleLoadAutosave}
+          onNewGame={handleNewGame}
+        />
+      ) : null}
 
       <ToastStack toasts={toasts} />
     </div>

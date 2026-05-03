@@ -10,7 +10,7 @@ import {
   type MouseEvent,
 } from 'react'
 import { defaultParams } from '../../game/params'
-import type { State } from '../../game/types'
+import type { GameSnapshotPayload } from '../../game/types'
 import { AquariumScene } from './AquariumScene'
 import {
   clientPointToAquariumPoint,
@@ -18,7 +18,7 @@ import {
 } from './pointer'
 
 type AquariumRendererProps = {
-  readonly state: State
+  readonly state: GameSnapshotPayload
   readonly onWorldSize?: (width: number, height: number) => void
   /** Logical aquarium coordinates (CSS pixels, same space as fish positions). */
   readonly onDropFood?: (x: number, y: number) => void

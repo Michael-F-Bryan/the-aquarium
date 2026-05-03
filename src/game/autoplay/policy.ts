@@ -1,7 +1,7 @@
 import { fishWantsFood } from '../satiation'
 import { NEVER_ATE } from '../satiation'
 import type { Params } from '../params'
-import type { Fish, State } from '../types'
+import type { Fish, GameSnapshotPayload } from '../types'
 import { dist } from '../vec2'
 
 export type AutoplayFoodDropAction = {
@@ -22,8 +22,8 @@ function compareByFeedingPriority(currentDay: number, a: Fish, b: Fish): number 
   return a.id.localeCompare(b.id)
 }
 
-function hasNearbyFood(state: State, fish: Fish, params: Params): boolean {
-  return state.food.some(
+function hasNearbyFood(snapshot: GameSnapshotPayload, fish: Fish, params: Params): boolean {
+  return snapshot.food.some(
     (piece) =>
       dist(piece.physics.position, fish.physics.position) <=
       params.foodPickupRadius * 1.6,
@@ -37,16 +37,16 @@ function hasNearbyFood(state: State, fish: Fish, params: Params): boolean {
  * - avoids dropping duplicate food near already-covered fish
  */
 export function chooseAutoplayFoodDrop(
-  state: State,
+  snapshot: GameSnapshotPayload,
   params: Params,
 ): AutoplayFoodDropAction | null {
-  const hungry = state.liveFish.filter((fish) =>
-    fishWantsFood(fish, state.currentDay, params.hungerThresholdDays),
+  const hungry = snapshot.liveFish.filter((fish) =>
+    fishWantsFood(fish, snapshot.currentDay, params.hungerThresholdDays),
   )
   if (hungry.length === 0) return null
-  hungry.sort((a, b) => compareByFeedingPriority(state.currentDay, a, b))
+  hungry.sort((a, b) => compareByFeedingPriority(snapshot.currentDay, a, b))
   const candidate = hungry[0]
-  if (hasNearbyFood(state, candidate, params)) return null
+  if (hasNearbyFood(snapshot, candidate, params)) return null
   return {
     targetFishId: candidate.id,
     x: candidate.physics.position.x,

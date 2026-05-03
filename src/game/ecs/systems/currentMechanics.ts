@@ -9,7 +9,7 @@ import {
   fishWantsFood,
   hungryWithinLastDay,
 } from '../../satiation'
-import type { DeadFish, Fish, FishAppearance, Species } from '../../types'
+import type { DeadFish, Fish, FishAppearance, FishSkeleton, Species } from '../../types'
 import { dist, vecAdd, vecNorm, vecScale, vecSub } from '../../vec2'
 import type {
   DeadFishEntity,
@@ -17,6 +17,13 @@ import type {
   FishSkeletonEntity,
   FoodEntity,
 } from '../components'
+import {
+  deadFishEntityFromDto,
+  fishDtoFromLiveEntity,
+  foodDtoFromEntity,
+  liveFishEntityFromDto,
+  skeletonEntityFromDto,
+} from '../entityAssembly'
 import { consumeRandom01, consumeRandomResult } from '../random'
 import type { AquariumRuntime } from '../world'
 
@@ -39,12 +46,30 @@ export type SimulationSystem = {
 
 type Health = 0 | 1 | 2 | 3
 
+const LIVE_QUERY = [
+  'tagLive',
+  'fishIdentity',
+  'fishBody',
+  'fishMetabolism',
+  'fishAppearance',
+  'fishPhysics',
+] as const
+
+const DEAD_QUERY = [
+  'deadFishMeta',
+  'fishIdentity',
+  'fishBody',
+  'fishMetabolism',
+  'fishAppearance',
+  'fishPhysics',
+] as const
+
 function liveFishEntities(runtime: AquariumRuntime): FishEntity[] {
-  return runtime.world.with('fish').entities
+  return runtime.world.with(...LIVE_QUERY).entities as FishEntity[]
 }
 
 function deadFishEntities(runtime: AquariumRuntime): DeadFishEntity[] {
-  return runtime.world.with('deadFish').entities
+  return runtime.world.with(...DEAD_QUERY).entities as DeadFishEntity[]
 }
 
 function snapshotFish(fish: Fish): Fish {
@@ -59,11 +84,11 @@ function snapshotFish(fish: Fish): Fish {
 }
 
 function skeletonEntities(runtime: AquariumRuntime): FishSkeletonEntity[] {
-  return runtime.world.with('skeleton').entities
+  return runtime.world.with('skeletonIdentity', 'skeletonPhysics').entities as FishSkeletonEntity[]
 }
 
 function foodEntities(runtime: AquariumRuntime): FoodEntity[] {
-  return runtime.world.with('food').entities
+  return runtime.world.with('foodIdentity', 'foodPhysics').entities as FoodEntity[]
 }
 
 function appendEvents(
@@ -71,6 +96,19 @@ function appendEvents(
   events: readonly SimulationEvent[],
 ): void {
   runtime.simulationEntity.events.push(...events)
+}
+
+function writeFishDtoOntoLiveEntity(e: FishEntity, fish: Fish): void {
+  e.fishIdentity.id = fish.id
+  e.fishIdentity.name = fish.name
+  e.fishIdentity.species = fish.species
+  e.fishBody.ageDays = fish.ageDays
+  e.fishBody.weightG = fish.weightG
+  e.fishBody.health = fish.health
+  e.fishMetabolism.lastAte = fish.lastAte
+  Object.assign(e.fishAppearance, fish.appearance)
+  Object.assign(e.fishPhysics.position, fish.physics.position)
+  Object.assign(e.fishPhysics.velocity, fish.physics.velocity)
 }
 
 function capSpeed(vx: number, vy: number, cap: number): { x: number; y: number } {
@@ -178,7 +216,7 @@ export const removeExpiredFoodSystem: SimulationSystem = {
   run(runtime) {
     const { currentDay, params } = runtime.simulationEntity.simulation
     for (const entity of [...foodEntities(runtime)]) {
-      if (currentDay - entity.food.createdOnDay >= params.foodLifetimeDays) {
+      if (currentDay - entity.foodIdentity!.createdOnDay >= params.foodLifetimeDays) {
         runtime.world.remove(entity)
       }
     }
@@ -190,9 +228,9 @@ export const applyFlakeSeekVelocitiesSystem: SimulationSystem = {
   run(runtime) {
     const { params, clampedDeltaMs, currentDay } = runtime.simulationEntity.simulation
     const dt = Math.min(clampedDeltaMs / 1000, 0.08)
-    const flakes = foodEntities(runtime).map((entity) => entity.food)
+    const flakes = foodEntities(runtime).map((entity) => foodDtoFromEntity(entity))
     for (const entity of liveFishEntities(runtime)) {
-      const fish = entity.fish
+      const fish = fishDtoFromLiveEntity(entity)
       if (fish.health === 0 || flakes.length === 0) continue
       if (!hungryWithinLastDay(currentDay, fish.lastAte, params.hungerThresholdDays)) {
         continue
@@ -227,7 +265,7 @@ export const applyFlakeSeekVelocitiesSystem: SimulationSystem = {
           Math.min(1, params.flakeSeekAcceleration * dt)
       const speed = Math.hypot(vx, vy)
       const scale = speed > cap && speed > 1e-6 ? cap / speed : 1
-      fish.physics.velocity = { x: vx * scale, y: vy * scale }
+      entity.fishPhysics.velocity = { x: vx * scale, y: vy * scale }
     }
   },
 }
@@ -238,7 +276,7 @@ export const applySocialSteeringSystem: SimulationSystem = {
     const { params, clampedDeltaMs, currentDay } = runtime.simulationEntity.simulation
     const dt = Math.min(clampedDeltaMs / 1000, 0.08)
     const entities = liveFishEntities(runtime)
-    const fishSnapshot = entities.map((entity) => snapshotFish(entity.fish))
+    const fishSnapshot = entities.map((entity) => snapshotFish(fishDtoFromLiveEntity(entity)))
     const normals = fishSnapshot.filter((fish) => fish.species === 'normal')
 
     for (let i = 0; i < entities.length; i += 1) {
@@ -299,7 +337,7 @@ export const applySocialSteeringSystem: SimulationSystem = {
       let vx = fish.physics.velocity.x + ax * dt
       let vy = fish.physics.velocity.y + ay * dt
       ;({ x: vx, y: vy } = capSpeed(vx, vy, cap))
-      entities[i].fish.physics.velocity = { x: vx, y: vy }
+      entities[i].fishPhysics.velocity = { x: vx, y: vy }
     }
   },
 }
@@ -311,13 +349,13 @@ export const integrateFishPositionsSystem: SimulationSystem = {
     const dt = Math.min(clampedDeltaMs / 1000, 0.08)
     const margin = FISH_HALF + 2
     for (const entity of liveFishEntities(runtime)) {
-      const fish = entity.fish
+      const fish = fishDtoFromLiveEntity(entity)
       if (fish.health === 0) continue
-      fish.physics.position.x = Math.min(
+      entity.fishPhysics.position.x = Math.min(
         params.aquariumWidth - margin,
         Math.max(margin, fish.physics.position.x + fish.physics.velocity.x * dt),
       )
-      fish.physics.position.y = Math.min(
+      entity.fishPhysics.position.y = Math.min(
         params.aquariumHeight - margin,
         Math.max(margin, fish.physics.position.y + fish.physics.velocity.y * dt),
       )
@@ -335,9 +373,9 @@ export const resolveFlakeEatingSystem: SimulationSystem = {
       string,
       { health: Health; weightG: number; lastAte: number }
     >()
-    const flakes = foodEntities(runtime).map((entity) => entity.food)
+    const flakes = foodEntities(runtime).map((entity) => foodDtoFromEntity(entity))
 
-    for (const fish of liveFishEntities(runtime).map((entity) => entity.fish)) {
+    for (const fish of liveFishEntities(runtime).map((entity) => fishDtoFromLiveEntity(entity))) {
       if (fish.health === 0) continue
       if (!hungryWithinLastDay(currentDay, fish.lastAte, params.hungerThresholdDays)) {
         continue
@@ -363,11 +401,15 @@ export const resolveFlakeEatingSystem: SimulationSystem = {
     if (updates.size === 0 && consumedFood.size === 0) return
 
     for (const entity of liveFishEntities(runtime)) {
-      const update = updates.get(entity.fish.id)
-      if (update) Object.assign(entity.fish, update)
+      const update = updates.get(entity.fishIdentity.id)
+      if (update) {
+        entity.fishBody.health = update.health
+        entity.fishBody.weightG = update.weightG
+        entity.fishMetabolism.lastAte = update.lastAte
+      }
     }
     for (const entity of [...foodEntities(runtime)]) {
-      if (consumedFood.has(entity.food.id)) runtime.world.remove(entity)
+      if (consumedFood.has(entity.foodIdentity!.id)) runtime.world.remove(entity)
     }
     appendEvents(runtime, events)
   },
@@ -381,15 +423,19 @@ export const resolveCarnivorePredationSystem: SimulationSystem = {
     const events: SimulationEvent[] = []
     const eaten = new Set<string>()
     const newDead: DeadFish[] = []
-    const skeletons: FishSkeletonEntity['skeleton'][] = []
+    const skeletons: FishSkeleton[] = []
     const diedOnDay = Math.floor(currentDay) + 1
-    const fishById = new Map(liveFishEntities(runtime).map((entity) => [entity.fish.id, entity]))
+    const fishById = new Map(
+      liveFishEntities(runtime).map((entity) => [entity.fishIdentity.id, entity]),
+    )
     const carnivores = liveFishEntities(runtime)
-      .map((entity) => entity.fish)
+      .map((entity) => fishDtoFromLiveEntity(entity))
       .filter((fish) => fish.species === 'carnivore' && fish.health > 0)
       .sort((a, b) => a.id.localeCompare(b.id))
 
-    let liveFish = liveFishEntities(runtime).map((entity) => ({ ...entity.fish }))
+    let liveFish = liveFishEntities(runtime).map((entity) => ({
+      ...fishDtoFromLiveEntity(entity),
+    }))
 
     for (const carnivore of carnivores) {
       if (eaten.has(carnivore.id)) continue
@@ -445,16 +491,16 @@ export const resolveCarnivorePredationSystem: SimulationSystem = {
 
     for (const fish of liveFish) {
       const entity = fishById.get(fish.id)
-      if (entity) Object.assign(entity.fish, fish)
+      if (entity) writeFishDtoOntoLiveEntity(entity, fish)
     }
     for (const entity of [...liveFishEntities(runtime)]) {
-      if (eaten.has(entity.fish.id)) runtime.world.remove(entity)
+      if (eaten.has(entity.fishIdentity.id)) runtime.world.remove(entity)
     }
     for (const deadFish of newDead) {
-      runtime.world.add({ deadFish })
+      runtime.world.add(deadFishEntityFromDto(deadFish))
     }
     for (const skeleton of skeletons) {
-      runtime.world.add({ skeleton })
+      runtime.world.add(skeletonEntityFromDto(skeleton))
     }
     appendEvents(runtime, events)
   },
@@ -467,15 +513,18 @@ export const sinkAndPruneSkeletonsSystem: SimulationSystem = {
     const dt = Math.min(clampedDeltaMs / 1000, 0.08)
     const bottomY = params.aquariumHeight - FISH_HALF - 2
     for (const entity of [...skeletonEntities(runtime)]) {
-      if (currentDay >= entity.skeleton.createdOnDay + params.skeletonLifetimeDays) {
+      if (
+        currentDay >=
+        entity.skeletonIdentity!.createdOnDay + params.skeletonLifetimeDays
+      ) {
         runtime.world.remove(entity)
         continue
       }
-      entity.skeleton.physics.position.y = Math.min(
+      entity.skeletonPhysics!.position.y = Math.min(
         bottomY,
-        entity.skeleton.physics.position.y + params.skeletonSinkSpeed * dt,
+        entity.skeletonPhysics.position.y + params.skeletonSinkSpeed * dt,
       )
-      entity.skeleton.physics.velocity = { x: 0, y: 0 }
+      entity.skeletonPhysics.velocity = { x: 0, y: 0 }
     }
   },
 }
@@ -496,37 +545,36 @@ export const runCalendarBoundariesSystem: SimulationSystem = {
     const dead: DeadFish[] = []
 
     for (const entity of liveFishEntities(runtime)) {
-      const fish = entity.fish
-      if (fish.health === 0) continue
-      const oldHealth = fish.health
+      if (entity.fishBody.health === 0) continue
+      const oldHealth = entity.fishBody.health
       if (
         !starvationGraceActive &&
         !ateWithinWindowBeforeCalendarClose(
-          fish.lastAte,
+          entity.fishMetabolism.lastAte,
           completedDayFloor,
           params.midnightMealWindowDays,
         )
       ) {
-        fish.health = decHealth(fish.health)
-        if (oldHealth === 3 && fish.health === 2) {
+        entity.fishBody.health = decHealth(entity.fishBody.health)
+        if (oldHealth === 3 && entity.fishBody.health === 2) {
           events.push({
             type: 'fish_hunger',
-            fishId: fish.id,
-            name: fish.name,
+            fishId: entity.fishIdentity.id,
+            name: entity.fishIdentity.name,
             level: 'hungry',
           })
-        } else if (oldHealth === 2 && fish.health === 1) {
+        } else if (oldHealth === 2 && entity.fishBody.health === 1) {
           events.push({
             type: 'fish_hunger',
-            fishId: fish.id,
-            name: fish.name,
+            fishId: entity.fishIdentity.id,
+            name: entity.fishIdentity.name,
             level: 'starving',
           })
-        } else if (oldHealth === 1 && fish.health === 0) {
+        } else if (oldHealth === 1 && entity.fishBody.health === 0) {
           events.push({
             type: 'fish_hunger',
-            fishId: fish.id,
-            name: fish.name,
+            fishId: entity.fishIdentity.id,
+            name: entity.fishIdentity.name,
             level: 'famished',
           })
         }
@@ -534,12 +582,16 @@ export const runCalendarBoundariesSystem: SimulationSystem = {
     }
 
     for (const entity of [...liveFishEntities(runtime)]) {
-      if (entity.fish.health > 0) continue
-      dead.push({ ...entity.fish, diedOnDay, deathCause: 'starvation' })
+      if (entity.fishBody.health > 0) continue
+      dead.push({
+        ...fishDtoFromLiveEntity(entity),
+        diedOnDay,
+        deathCause: 'starvation',
+      })
       events.push({
         type: 'fish_died',
-        fishId: entity.fish.id,
-        name: entity.fish.name,
+        fishId: entity.fishIdentity.id,
+        name: entity.fishIdentity.name,
         reason: 'starvation',
       })
       runtime.world.remove(entity)
@@ -547,7 +599,7 @@ export const runCalendarBoundariesSystem: SimulationSystem = {
 
     const born: Fish[] = []
     for (const entity of liveFishEntities(runtime)) {
-      const fish = entity.fish
+      const fish = fishDtoFromLiveEntity(entity)
       if (fish.weightG < params.reproductionWeightThresholdG) continue
       const probability = Math.min(
         fish.ageDays / Math.max(1, params.reproductionAgeScaleDays),
@@ -586,17 +638,17 @@ export const runCalendarBoundariesSystem: SimulationSystem = {
     }
 
     for (const deadFish of dead) {
-      runtime.world.add({ deadFish })
+      runtime.world.add(deadFishEntityFromDto(deadFish))
     }
     for (const baby of born) {
-      runtime.world.add({ fish: baby })
+      runtime.world.add(liveFishEntityFromDto(baby))
     }
     for (const entity of liveFishEntities(runtime)) {
-      entity.fish.ageDays += 1
+      entity.fishBody.ageDays += 1
     }
 
     simulation.score = computeReadmeScore(
-      liveFishEntities(runtime).map((entity) => entity.fish),
+      liveFishEntities(runtime).map((entity) => fishDtoFromLiveEntity(entity)),
     )
     simulation.lastClosedCalendarDayFloor += 1
     appendEvents(runtime, events)
@@ -611,15 +663,15 @@ export const sinkAndPruneDeadFishSystem: SimulationSystem = {
     const bottomY = params.aquariumHeight - FISH_HALF - 2
     const dayFloor = Math.floor(currentDay)
     for (const entity of [...deadFishEntities(runtime)]) {
-      if (dayFloor >= entity.deadFish.diedOnDay + params.deadFishLingerDays) {
+      if (dayFloor >= entity.deadFishMeta.diedOnDay + params.deadFishLingerDays) {
         runtime.world.remove(entity)
         continue
       }
-      entity.deadFish.physics.position.y = Math.min(
+      entity.fishPhysics.position.y = Math.min(
         bottomY,
-        entity.deadFish.physics.position.y + params.deadSinkSpeed * dt,
+        entity.fishPhysics.position.y + params.deadSinkSpeed * dt,
       )
-      entity.deadFish.physics.velocity = { x: 0, y: 0 }
+      entity.fishPhysics.velocity = { x: 0, y: 0 }
     }
   },
 }

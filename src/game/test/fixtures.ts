@@ -1,6 +1,6 @@
 import { NEVER_ATE } from '../satiation'
 import { defaultParams, type Params } from '../params'
-import type { Fish, FishAppearance, State } from '../types'
+import type { Fish, FishAppearance, GameSnapshotPayload } from '../types'
 
 export const testParams = (over: Partial<Params> = {}): Params => ({
   ...defaultParams,
@@ -45,7 +45,9 @@ export function makeTestFish(over: Partial<Fish> = {}): Fish {
 /** @deprecated use makeTestFish */
 export const minimalFish = makeTestFish
 
-export const minimalState = (over: Partial<State> = {}): State => ({
+export const minimalGameSnapshotPayload = (
+  over: Partial<GameSnapshotPayload> = {},
+): GameSnapshotPayload => ({
   currentDay: 0,
   lastClosedCalendarDayFloor: -1,
   nextEntityId: 1,
@@ -57,3 +59,6 @@ export const minimalState = (over: Partial<State> = {}): State => ({
   food: [],
   ...over,
 })
+
+/** @deprecated use minimalGameSnapshotPayload */
+export const minimalState = minimalGameSnapshotPayload
