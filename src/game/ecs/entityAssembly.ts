@@ -42,15 +42,16 @@ export type DeadFishMeta = {
 /** Present only on live fish (excludes corpses from live-fish queries). */
 export type LiveFishTag = { tagLive: true }
 
-export function liveFishEntityFromDto(fish: Fish): LiveFishTag & {
+type FishComponentBundle = {
   fishIdentity: FishIdentity
   fishBody: FishBody
   fishMetabolism: FishMetabolism
   fishAppearance: FishAppearance
   fishPhysics: Physics
-} {
+}
+
+function fishComponentsFromDto(fish: Fish): FishComponentBundle {
   return {
-    tagLive: true,
     fishIdentity: { id: fish.id, name: fish.name, species: fish.species },
     fishBody: {
       ageDays: fish.ageDays,
@@ -66,11 +67,18 @@ export function liveFishEntityFromDto(fish: Fish): LiveFishTag & {
   }
 }
 
-export function deadFishEntityFromDto(d: DeadFish): ReturnType<typeof liveFishEntityFromDto> & {
+export function liveFishEntityFromDto(fish: Fish): LiveFishTag & FishComponentBundle {
+  return {
+    tagLive: true,
+    ...fishComponentsFromDto(fish),
+  }
+}
+
+export function deadFishEntityFromDto(d: DeadFish): FishComponentBundle & {
   deadFishMeta: DeadFishMeta
 } {
   return {
-    ...liveFishEntityFromDto(d),
+    ...fishComponentsFromDto(d),
     deadFishMeta: { diedOnDay: d.diedOnDay, deathCause: d.deathCause },
   }
 }

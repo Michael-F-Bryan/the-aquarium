@@ -54,8 +54,7 @@ export type AquariumEntity = {
 
 export type SimulationEntity = AquariumEntity & SimulationStateEntity
 
-export type FishEntity = AquariumEntity & {
-  tagLive: true
+export type FishComponents = AquariumEntity & {
   fishIdentity: FishIdentity
   fishBody: FishBody
   fishMetabolism: FishMetabolism
@@ -63,7 +62,9 @@ export type FishEntity = AquariumEntity & {
   fishPhysics: Physics
 }
 
-export type DeadFishEntity = FishEntity & { deadFishMeta: DeadFishMeta }
+export type FishEntity = FishComponents & { tagLive: true }
+
+export type DeadFishEntity = FishComponents & { deadFishMeta: DeadFishMeta }
 
 export type FishSkeletonEntity = AquariumEntity & {
   skeletonIdentity: SkeletonIdentity
