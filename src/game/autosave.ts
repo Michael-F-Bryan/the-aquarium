@@ -1,0 +1,90 @@
+import { defaultParams, type Params } from './params'
+import {
+  GAME_SNAPSHOT_SCHEMA_VERSION,
+  parseGameSnapshot,
+  serializeGameSnapshot,
+} from './snapshot'
+import type { State } from './types'
+
+/** localStorage key for bundled autosave (thumbnail + state + params). */
+export const AUTOSAVE_STORAGE_KEY = 'the-aquarium-autosave-v1'
+
+export const AUTOSAVE_BUNDLE_SCHEMA = 1 as const
+
+export type AutosaveBundle = {
+  bundleSchema: typeof AUTOSAVE_BUNDLE_SCHEMA
+  savedAt: string
+  thumbnailDataUrl: string | null
+  gameSchemaVersion: typeof GAME_SNAPSHOT_SCHEMA_VERSION
+  /** Raw game snapshot `{ schemaVersion, state }` object before stringify. */
+  game: unknown
+  params: Params
+}
+
+export function buildAutosaveJson(options: {
+  state: State
+  params: Params
+  thumbnailDataUrl: string | null
+}): string {
+  const bundle: AutosaveBundle = {
+    bundleSchema: AUTOSAVE_BUNDLE_SCHEMA,
+    savedAt: new Date().toISOString(),
+    thumbnailDataUrl: options.thumbnailDataUrl,
+    gameSchemaVersion: GAME_SNAPSHOT_SCHEMA_VERSION,
+    game: JSON.parse(serializeGameSnapshot(options.state)) as unknown,
+    params: options.params,
+  }
+  return JSON.stringify(bundle)
+}
+
+export type LoadAutosaveResult =
+  | { ok: true; state: State; params: Params; thumbnailDataUrl: string | null }
+  | { ok: false; error: string }
+
+export function parseAutosaveJson(raw: string): LoadAutosaveResult {
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) {
+      return { ok: false, error: 'Autosave root must be an object' }
+    }
+    const o = parsed as Record<string, unknown>
+    if (o.bundleSchema !== AUTOSAVE_BUNDLE_SCHEMA) {
+      return { ok: false, error: 'Unknown autosave bundle schema' }
+    }
+    const gameParsed = parseGameSnapshot(o.game)
+    if (!gameParsed.ok) return gameParsed
+    const paramsRaw = o.params
+    if (typeof paramsRaw !== 'object' || paramsRaw === null) {
+      return { ok: false, error: 'params missing' }
+    }
+    const p = paramsRaw as Params
+    const merged: Params = {
+      ...defaultParams,
+      ...p,
+    }
+    const thumb =
+      typeof o.thumbnailDataUrl === 'string' || o.thumbnailDataUrl === null
+        ? (o.thumbnailDataUrl as string | null)
+        : null
+    return {
+      ok: true,
+      state: gameParsed.state,
+      params: merged,
+      thumbnailDataUrl: thumb,
+    }
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    }
+  }
+}
+
+export function readAutosaveFromStorage(): LoadAutosaveResult {
+  if (typeof localStorage === 'undefined') {
+    return { ok: false, error: 'localStorage unavailable' }
+  }
+  const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY)
+  if (raw === null) return { ok: false, error: 'No autosave found' }
+  return parseAutosaveJson(raw)
+}
