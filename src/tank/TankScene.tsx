@@ -8,18 +8,24 @@ import {
   TANK_FLOOR_Y,
   TANK_SCENE_BACKGROUND,
 } from "./tankCameraConstants";
+import { SimulationFrameBridge } from "./SimulationFrameBridge";
 
 const sceneBackground = new Color(TANK_SCENE_BACKGROUND);
 
 export type TankSceneProps = {
   className?: string;
+  /** When true, stops the render loop so the tank and simulation clock stay frozen. */
+  paused?: boolean;
 };
 
-export function TankScene({ className }: TankSceneProps) {
+export function TankScene({ className, paused = false }: TankSceneProps) {
+  const frameloop = paused ? "never" : "always";
+  const rootClass = [className, paused ? "pointer-events-none" : ""].filter(Boolean).join(" ");
   return (
-    <div className={className} data-testid="tank-scene-root">
+    <div className={rootClass} data-testid="tank-scene-root">
       <Canvas
         className="h-full w-full touch-none"
+        frameloop={frameloop}
         gl={{ antialias: true, alpha: false }}
         camera={{
           position: TANK_CAMERA_POSITION,
@@ -31,6 +37,7 @@ export function TankScene({ className }: TankSceneProps) {
           scene.background = sceneBackground;
         }}
       >
+        <SimulationFrameBridge />
         <ambientLight intensity={0.55} />
         <directionalLight position={[4, 6, 3]} intensity={0.85} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, TANK_FLOOR_Y, 0]}>
