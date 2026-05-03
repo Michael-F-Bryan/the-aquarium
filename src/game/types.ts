@@ -5,8 +5,9 @@ export type State = {
   /** Fractional simulated day; `Math.floor` is the calendar day index in flight. */
   currentDay: number
   /**
-   * Greatest calendar day floor for which end-of-day rules have run.
-   * Starts at -1 so day 0 is open until `currentDay` reaches 1.
+   * Index of the last calendar day whose **midnight** has been processed.
+   * Starts at -1 (no nights done). End-of-day for day `k` runs when
+   * `floor(currentDay)` first exceeds `k + 1`.
    */
   lastClosedCalendarDayFloor: number
   nextEntityId: number

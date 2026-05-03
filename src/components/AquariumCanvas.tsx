@@ -67,9 +67,10 @@ export function AquariumCanvas({ state, onWorldSize, onDropFood }: Props) {
   return (
     <canvas
       ref={canvasRef}
-      role="presentation"
-      className="block h-full w-full cursor-crosshair touch-none"
-      aria-label="Aquarium — click to drop food"
+      role="img"
+      tabIndex={0}
+      className="block h-full w-full cursor-crosshair touch-none outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60"
+      aria-label="Aquarium — click to drop fish food"
       onClick={(e) => {
         if (!onDropFood) return
         const canvas = canvasRef.current

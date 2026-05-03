@@ -33,8 +33,10 @@ function App() {
   useEffect(() => {
     let raf = 0
     let last = performance.now()
+    let active = true
 
     const tick = (now: number) => {
+      if (!active) return
       const rawDelta = now - last
       last = now
       const p = paramsRef.current
@@ -45,11 +47,16 @@ function App() {
         aquariumHeight: w.height,
       }
       setGameState((prev) => update(prev, merged, rawDelta))
-      raf = requestAnimationFrame(tick)
+      if (active) {
+        raf = requestAnimationFrame(tick)
+      }
     }
 
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    return () => {
+      active = false
+      cancelAnimationFrame(raf)
+    }
   }, [])
 
   const handleWorldSize = useCallback((width: number, height: number) => {

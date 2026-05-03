@@ -122,13 +122,16 @@ function closeOneCalendarDay(
 }
 
 /**
- * When the clock crosses a new integer day, resolve **one** midnight so a
- * single long frame cannot stack multiple hunger nights without daytime in
- * between. Remaining crossings are handled on subsequent frames.
+ * Run midnight rules when the calendar has entered a **new** integer day
+ * (i.e. `floor(currentDay) > lastClosed + 1`). With `lastClosed = -1`, day 0
+ * is in progress until `currentDay` reaches 1 — avoids firing end-of-day-0
+ * while still at `currentDay ∈ [0, 1)`.
+ *
+ * At most one midnight per frame; catch up continues on later frames.
  */
 export function runCalendarBoundaries(state: State, params: Params): State {
   const floorDay = Math.floor(state.currentDay)
-  if (floorDay <= state.lastClosedCalendarDayFloor) return state
+  if (floorDay <= state.lastClosedCalendarDayFloor + 1) return state
   const completedDayFloor = state.lastClosedCalendarDayFloor + 1
   let s = closeOneCalendarDay(state, params, completedDayFloor)
   s = { ...s, lastClosedCalendarDayFloor: s.lastClosedCalendarDayFloor + 1 }
