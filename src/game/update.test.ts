@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { runSimulationStep } from './ecs/schedule'
 import { update } from './update'
 import { minimalFish, minimalState, testParams } from './test/fixtures'
 
@@ -27,5 +28,21 @@ describe('update', () => {
     })
     const { state: next } = update(state, testParams(), 16)
     expect(next.liveFish).toHaveLength(1)
+  })
+
+  it('returns the ECS runtime step result', () => {
+    const fish = minimalFish({
+      lastAte: 99,
+      physics: { position: { x: 50, y: 50 }, velocity: { x: 0, y: 0 } },
+    })
+    const state = minimalState({
+      currentDay: 100,
+      liveFish: [fish],
+    })
+    const params = testParams()
+
+    expect(update(state, params, 16)).toEqual(
+      runSimulationStep({ state, params, deltaMs: 16 }),
+    )
   })
 })
