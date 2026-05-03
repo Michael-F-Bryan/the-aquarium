@@ -18,16 +18,22 @@ export function ateWithinWindowBeforeCalendarClose(
   return lastAte >= closeSimTime - windowDays && lastAte <= closeSimTime
 }
 
-/**
- * Rolling window: no meal in the last 1.0 units of `currentDay` (one simulated day).
- */
-export function hungryWithinLastDay(currentDay: number, lastAte: number): boolean {
+/** Rolling hunger window in simulated-day units. */
+export function hungryWithinLastDay(
+  currentDay: number,
+  lastAte: number,
+  hungerThresholdDays = 1,
+): boolean {
   if (lastAte < 0) return true
-  return currentDay - lastAte >= 1
+  return currentDay - lastAte >= hungerThresholdDays
 }
 
 /** Live fish actively foraging (matches flake-seek / flake-eat hunger rule). */
-export function fishWantsFood(fish: Fish, currentDay: number): boolean {
+export function fishWantsFood(
+  fish: Fish,
+  currentDay: number,
+  hungerThresholdDays = 1,
+): boolean {
   if (fish.health === 0) return false
-  return hungryWithinLastDay(currentDay, fish.lastAte)
+  return hungryWithinLastDay(currentDay, fish.lastAte, hungerThresholdDays)
 }

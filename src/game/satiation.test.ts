@@ -9,13 +9,13 @@ import { minimalFish } from './test/fixtures'
 
 describe('satiation', () => {
   it('hungryWithinLastDay is true when never ate', () => {
-    expect(hungryWithinLastDay(5, NEVER_ATE)).toBe(true)
+    expect(hungryWithinLastDay(5, NEVER_ATE, 1)).toBe(true)
   })
 
   it('hungryWithinLastDay when gap >= 1 day', () => {
-    expect(hungryWithinLastDay(3, 1.9)).toBe(true)
-    expect(hungryWithinLastDay(3, 2)).toBe(true)
-    expect(hungryWithinLastDay(3, 2.1)).toBe(false)
+    expect(hungryWithinLastDay(3, 1.9, 1)).toBe(true)
+    expect(hungryWithinLastDay(3, 2, 1)).toBe(true)
+    expect(hungryWithinLastDay(3, 2.1, 1)).toBe(false)
   })
 
   it('ateWithinWindowBeforeCalendarClose', () => {
@@ -27,7 +27,7 @@ describe('satiation', () => {
 
   it('fishWantsFood respects health', () => {
     const dead = minimalFish({ health: 0 })
-    expect(fishWantsFood(dead, 10)).toBe(false)
-    expect(fishWantsFood(minimalFish({ health: 1 }), 10)).toBe(true)
+    expect(fishWantsFood(dead, 10, 1)).toBe(false)
+    expect(fishWantsFood(minimalFish({ health: 1 }), 10, 1)).toBe(true)
   })
 })

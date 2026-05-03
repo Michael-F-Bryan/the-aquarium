@@ -1,4 +1,3 @@
-import { MIN_FOOD_SEPARATION } from '../constants'
 import type { Params } from '../params'
 import type { State } from '../types'
 import { dist } from '../vec2'
@@ -9,9 +8,10 @@ function tooCloseToExisting(
   x: number,
   y: number,
   food: State['food'],
+  minFoodSeparation: number,
 ): boolean {
   for (const piece of food) {
-    if (dist({ x, y }, piece.physics.position) < MIN_FOOD_SEPARATION) {
+    if (dist({ x, y }, piece.physics.position) < minFoodSeparation) {
       return true
     }
   }
@@ -33,7 +33,7 @@ export function dropFlakeFood(
     params.aquariumHeight - FOOD_MARGIN,
     Math.max(FOOD_MARGIN, y),
   )
-  if (tooCloseToExisting(px, py, state.food)) {
+  if (tooCloseToExisting(px, py, state.food, params.minFoodSeparation)) {
     return state
   }
   const id = `food-${state.nextEntityId}`

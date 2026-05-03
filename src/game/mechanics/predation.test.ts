@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { CARNIVORE_KILL_RADIUS } from '../constants'
 import { resolveCarnivorePredation } from './predation'
-import { minimalFish, minimalState } from '../test/fixtures'
+import { minimalFish, minimalState, testParams } from '../test/fixtures'
 
 describe('resolveCarnivorePredation', () => {
   it('removes smaller overlapping prey', () => {
@@ -14,13 +13,14 @@ describe('resolveCarnivorePredation', () => {
         velocity: { x: 0, y: 0 },
       },
     })
+    const p = testParams()
     const prey = minimalFish({
       id: 'p1',
       species: 'normal',
       weightG: 100,
       physics: {
         position: {
-          x: 200 + CARNIVORE_KILL_RADIUS * 0.5,
+          x: 200 + p.carnivoreKillRadius * 0.5,
           y: 200,
         },
         velocity: { x: 0, y: 0 },
@@ -30,13 +30,15 @@ describe('resolveCarnivorePredation', () => {
       currentDay: 3,
       liveFish: [carn, prey],
     })
-    const { state: next, events } = resolveCarnivorePredation(state)
+    const { state: next, events } = resolveCarnivorePredation(state, p)
     expect(next.liveFish.map((f) => f.id)).toEqual(['c1'])
     expect(next.deadFish).toHaveLength(1)
     expect(next.deadFish[0].id).toBe('p1')
     const hunter = next.liveFish[0]
     expect(hunter.lastAte).toBe(3)
-    expect(hunter.weightG).toBe(400 + Math.round(100 * 0.1))
+    expect(hunter.weightG).toBe(
+      400 + Math.round(100 * p.predationWeightGainFraction),
+    )
     expect(next.skeletons).toHaveLength(1)
     expect(next.skeletons[0].preyName).toBe('Test')
     expect(events).toHaveLength(1)
@@ -60,7 +62,7 @@ describe('resolveCarnivorePredation', () => {
       },
     })
     const state = minimalState({ currentDay: 1, liveFish: [carn, other] })
-    const { state: next } = resolveCarnivorePredation(state)
+    const { state: next } = resolveCarnivorePredation(state, testParams())
     expect(next.liveFish).toHaveLength(2)
   })
 })

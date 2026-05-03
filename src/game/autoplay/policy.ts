@@ -1,6 +1,6 @@
-import { FOOD_PICKUP_RADIUS } from '../constants'
 import { fishWantsFood } from '../satiation'
 import { NEVER_ATE } from '../satiation'
+import type { Params } from '../params'
 import type { Fish, State } from '../types'
 import { dist } from '../vec2'
 
@@ -22,9 +22,11 @@ function compareByFeedingPriority(currentDay: number, a: Fish, b: Fish): number 
   return a.id.localeCompare(b.id)
 }
 
-function hasNearbyFood(state: State, fish: Fish): boolean {
+function hasNearbyFood(state: State, fish: Fish, params: Params): boolean {
   return state.food.some(
-    (piece) => dist(piece.physics.position, fish.physics.position) <= FOOD_PICKUP_RADIUS * 1.6,
+    (piece) =>
+      dist(piece.physics.position, fish.physics.position) <=
+      params.foodPickupRadius * 1.6,
   )
 }
 
@@ -34,12 +36,17 @@ function hasNearbyFood(state: State, fish: Fish): boolean {
  * - prioritizes lower health first
  * - avoids dropping duplicate food near already-covered fish
  */
-export function chooseAutoplayFoodDrop(state: State): AutoplayFoodDropAction | null {
-  const hungry = state.liveFish.filter((fish) => fishWantsFood(fish, state.currentDay))
+export function chooseAutoplayFoodDrop(
+  state: State,
+  params: Params,
+): AutoplayFoodDropAction | null {
+  const hungry = state.liveFish.filter((fish) =>
+    fishWantsFood(fish, state.currentDay, params.hungerThresholdDays),
+  )
   if (hungry.length === 0) return null
   hungry.sort((a, b) => compareByFeedingPriority(state.currentDay, a, b))
   const candidate = hungry[0]
-  if (hasNearbyFood(state, candidate)) return null
+  if (hasNearbyFood(state, candidate, params)) return null
   return {
     targetFishId: candidate.id,
     x: candidate.physics.position.x,

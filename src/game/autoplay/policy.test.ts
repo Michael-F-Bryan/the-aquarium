@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { NEVER_ATE } from '../satiation'
-import { makeTestFish, minimalState } from '../test/fixtures'
+import { makeTestFish, minimalState, testParams } from '../test/fixtures'
 import { chooseAutoplayFoodDrop } from './policy'
 
 describe('chooseAutoplayFoodDrop', () => {
@@ -16,7 +16,7 @@ describe('chooseAutoplayFoodDrop', () => {
         }),
       ],
     })
-    expect(chooseAutoplayFoodDrop(state)).toBeNull()
+    expect(chooseAutoplayFoodDrop(state, testParams())).toBeNull()
   })
 
   it('prioritizes hungry fish with lowest health', () => {
@@ -36,7 +36,7 @@ describe('chooseAutoplayFoodDrop', () => {
       currentDay: 2.2,
       liveFish: [healthier, lowHealth],
     })
-    const action = chooseAutoplayFoodDrop(state)
+    const action = chooseAutoplayFoodDrop(state, testParams())
     expect(action).not.toBeNull()
     expect(action?.targetFishId).toBe('f-low')
     expect(action?.x).toBe(220)
@@ -61,6 +61,6 @@ describe('chooseAutoplayFoodDrop', () => {
         },
       ],
     })
-    expect(chooseAutoplayFoodDrop(state)).toBeNull()
+    expect(chooseAutoplayFoodDrop(state, testParams())).toBeNull()
   })
 })

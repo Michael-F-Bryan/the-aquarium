@@ -1,4 +1,4 @@
-import { DEAD_SINK_SPEED, FISH_HALF } from '../constants'
+import { FISH_HALF } from '../constants'
 import type { Params } from '../params'
 import type { State } from '../types'
 
@@ -20,7 +20,7 @@ export function sinkAndPruneDead(
         ...d.physics,
         position: {
           x: d.physics.position.x,
-          y: Math.min(bottomY, d.physics.position.y + DEAD_SINK_SPEED * dt),
+          y: Math.min(bottomY, d.physics.position.y + params.deadSinkSpeed * dt),
         },
         velocity: { x: 0, y: 0 },
       },

@@ -2,8 +2,6 @@ import { FISH_HALF } from '../constants'
 import type { Params } from '../params'
 import type { State } from '../types'
 
-const SINK_SPEED = 38
-
 /** Sink skeletons to the floor and remove those older than two simulated days. */
 export function sinkAndPruneSkeletons(
   state: State,
@@ -15,14 +13,14 @@ export function sinkAndPruneSkeletons(
   const bottomY = params.aquariumHeight - FISH_HALF - 2
 
   const skeletons = state.skeletons
-    .filter((s) => state.currentDay < s.createdOnDay + 2)
+    .filter((s) => state.currentDay < s.createdOnDay + params.skeletonLifetimeDays)
     .map((s) => ({
       ...s,
       physics: {
         ...s.physics,
         position: {
           x: s.physics.position.x,
-          y: Math.min(bottomY, s.physics.position.y + SINK_SPEED * dt),
+          y: Math.min(bottomY, s.physics.position.y + params.skeletonSinkSpeed * dt),
         },
         velocity: { x: 0, y: 0 },
       },

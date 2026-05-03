@@ -34,11 +34,11 @@ export function update(state: State, params: Params, deltaMs: number): UpdateRes
   next = applySocialSteering(next, params, clampedDelta)
   next = integrateFishPositions(next, params, clampedDelta)
 
-  const flake = resolveFlakeEating(next)
+  const flake = resolveFlakeEating(next, params)
   next = flake.state
   events.push(...flake.events)
 
-  const pred = resolveCarnivorePredation(next)
+  const pred = resolveCarnivorePredation(next, params)
   next = pred.state
   events.push(...pred.events)
 

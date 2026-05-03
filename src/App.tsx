@@ -146,7 +146,7 @@ function App() {
     const delay = Math.min(5000, Math.max(100, autoplayIntervalMs))
     const timer = window.setInterval(() => {
       setGameState((prev) => {
-        const decision = chooseAutoplayFoodDrop(prev)
+        const decision = chooseAutoplayFoodDrop(prev, paramsRef.current)
         if (!decision) {
           queueMicrotask(() => {
             appendAutoplayLog({

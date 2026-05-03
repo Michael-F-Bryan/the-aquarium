@@ -1,5 +1,4 @@
 import { rollAppearance } from '../appearance'
-import { MIDNIGHT_MEAL_WINDOW_DAYS } from '../constants'
 import { pickFishName } from '../data/fishNames'
 import type { SimulationEvent } from '../events'
 import { rngNext01 } from '../rng'
@@ -58,7 +57,7 @@ function spawnBaby(
 
 /**
  * One simulated midnight: hunger, mortality, reproduction, aging.
- * Hunger: no meal in the rolling `MIDNIGHT_MEAL_WINDOW_DAYS` window before close.
+ * Hunger: no meal in the rolling `params.midnightMealWindowDays` window before close.
  */
 function closeOneCalendarDay(
   state: State,
@@ -84,7 +83,7 @@ function closeOneCalendarDay(
       !ateWithinWindowBeforeCalendarClose(
         fish.lastAte,
         completedDayFloor,
-        MIDNIGHT_MEAL_WINDOW_DAYS,
+        params.midnightMealWindowDays,
       )
     ) {
       h = decHealth(h)
@@ -133,11 +132,14 @@ function closeOneCalendarDay(
   const born: Fish[] = []
   let nextId = state.nextEntityId
   for (const fish of liveFish) {
-    if (fish.weightG < 300) continue
-    const p = Math.min(fish.ageDays / 100, params.reproduceChanceCap)
+    if (fish.weightG < params.reproductionWeightThresholdG) continue
+    const p = Math.min(
+      fish.ageDays / Math.max(1, params.reproductionAgeScaleDays),
+      params.reproduceChanceCap,
+    )
     if (roll() < p) {
-      const jx = (roll() - 0.5) * 36
-      const jy = (roll() - 0.5) * 36
+      const jx = (roll() - 0.5) * params.babySpawnJitterPx
+      const jy = (roll() - 0.5) * params.babySpawnJitterPx
       const id = `fish-${nextId}`
       nextId += 1
       const namePick = pickFishName(rngState)

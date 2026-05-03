@@ -1,6 +1,6 @@
-import { FOOD_PICKUP_RADIUS } from '../constants'
 import type { SimulationEvent } from '../events'
 import { hungryWithinLastDay } from '../satiation'
+import type { Params } from '../params'
 import type { State } from '../types'
 import { dist } from '../vec2'
 
@@ -12,7 +12,7 @@ export type FlakeEatResult = { state: State; events: SimulationEvent[] }
  * Overlap with flakes: only if the fish has not eaten in the last 1.0
  * simulated days. Heal or +100g at full health.
  */
-export function resolveFlakeEating(state: State): FlakeEatResult {
+export function resolveFlakeEating(state: State, params: Params): FlakeEatResult {
   const events: SimulationEvent[] = []
   const consumedFood = new Set<string>()
   const updates = new Map<
@@ -22,10 +22,16 @@ export function resolveFlakeEating(state: State): FlakeEatResult {
 
   for (const fish of state.liveFish) {
     if (fish.health === 0) continue
-    if (!hungryWithinLastDay(state.currentDay, fish.lastAte)) continue
+    if (
+      !hungryWithinLastDay(state.currentDay, fish.lastAte, params.hungerThresholdDays)
+    ) {
+      continue
+    }
     for (const piece of state.food) {
       if (consumedFood.has(piece.id)) continue
-      if (dist(fish.physics.position, piece.physics.position) <= FOOD_PICKUP_RADIUS) {
+      if (
+        dist(fish.physics.position, piece.physics.position) <= params.foodPickupRadius
+      ) {
         consumedFood.add(piece.id)
         let health: Health = fish.health
         let weightG = fish.weightG

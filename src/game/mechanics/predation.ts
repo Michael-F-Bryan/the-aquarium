@@ -1,12 +1,15 @@
-import { CARNIVORE_KILL_RADIUS } from '../constants'
 import type { SimulationEvent } from '../events'
+import type { Params } from '../params'
 import type { DeadFish, Fish, FishSkeleton, State } from '../types'
 import { dist } from '../vec2'
 
 export type PredationResult = { state: State; events: SimulationEvent[] }
 
 /** Carnivores that overlap a strictly smaller fish consume it (README catch). */
-export function resolveCarnivorePredation(state: State): PredationResult {
+export function resolveCarnivorePredation(
+  state: State,
+  params: Params,
+): PredationResult {
   const events: SimulationEvent[] = []
   const eaten = new Set<string>()
   const newDead: DeadFish[] = []
@@ -28,7 +31,7 @@ export function resolveCarnivorePredation(state: State): PredationResult {
       if (p.id === c.id || p.health === 0 || eaten.has(p.id)) continue
       if (p.weightG >= c.weightG) continue
       const d = dist(c.physics.position, p.physics.position)
-      if (d <= CARNIVORE_KILL_RADIUS && d < bestD) {
+      if (d <= params.carnivoreKillRadius && d < bestD) {
         bestD = d
         best = p
       }
@@ -36,7 +39,7 @@ export function resolveCarnivorePredation(state: State): PredationResult {
     if (!best) continue
     eaten.add(best.id)
     newDead.push({ ...best, health: 0, diedOnDay })
-    const weightGainG = Math.round(best.weightG * 0.1)
+    const weightGainG = Math.round(best.weightG * params.predationWeightGainFraction)
     liveFish = liveFish.map((f) => {
       if (f.id !== c.id) return f
       return {

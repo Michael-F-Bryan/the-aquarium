@@ -1,9 +1,7 @@
-import { FISH_HALF, MAX_SPEED_CARNIVORE, MAX_SPEED_NORMAL } from '../constants'
 import { hungryWithinLastDay } from '../satiation'
 import type { Params } from '../params'
 import type { State } from '../types'
-
-const SEEK_ACCEL = 5.5
+import { FISH_HALF } from '../constants'
 
 /**
  * Fish that have not eaten in the last 1.0 simulated days steer toward the
@@ -11,7 +9,7 @@ const SEEK_ACCEL = 5.5
  */
 export function applyFlakeSeekVelocities(
   state: State,
-  _params: Params,
+  params: Params,
   deltaMs: number,
 ): State {
   const dt = Math.min(deltaMs / 1000, 0.08)
@@ -19,7 +17,9 @@ export function applyFlakeSeekVelocities(
     if (fish.health === 0 || state.food.length === 0) {
       return fish
     }
-    if (!hungryWithinLastDay(state.currentDay, fish.lastAte)) {
+    if (
+      !hungryWithinLastDay(state.currentDay, fish.lastAte, params.hungerThresholdDays)
+    ) {
       return fish
     }
 
@@ -38,7 +38,9 @@ export function applyFlakeSeekVelocities(
     }
 
     const cap =
-      fish.species === 'carnivore' ? MAX_SPEED_CARNIVORE : MAX_SPEED_NORMAL
+      fish.species === 'carnivore'
+        ? params.maxSpeedNormal * params.maxSpeedCarnivoreMultiplier
+        : params.maxSpeedNormal
     const dx = tx - fish.physics.position.x
     const dy = ty - fish.physics.position.y
     const len = Math.hypot(dx, dy) || 1
@@ -46,10 +48,12 @@ export function applyFlakeSeekVelocities(
     const desired = { x: dir.x * cap, y: dir.y * cap }
     const vx =
       fish.physics.velocity.x +
-      (desired.x - fish.physics.velocity.x) * Math.min(1, SEEK_ACCEL * dt)
+      (desired.x - fish.physics.velocity.x) *
+      Math.min(1, params.flakeSeekAcceleration * dt)
     const vy =
       fish.physics.velocity.y +
-      (desired.y - fish.physics.velocity.y) * Math.min(1, SEEK_ACCEL * dt)
+      (desired.y - fish.physics.velocity.y) *
+      Math.min(1, params.flakeSeekAcceleration * dt)
     const speed = Math.hypot(vx, vy)
     const scale = speed > cap && speed > 1e-6 ? cap / speed : 1
     return {

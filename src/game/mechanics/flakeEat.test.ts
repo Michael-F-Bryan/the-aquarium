@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { FOOD_PICKUP_RADIUS } from '../constants'
 import { resolveFlakeEating } from './flakeEat'
-import { minimalFish, minimalState } from '../test/fixtures'
+import { minimalFish, minimalState, testParams } from '../test/fixtures'
 
 describe('resolveFlakeEating', () => {
   it('does not eat when not hungry', () => {
@@ -22,7 +21,7 @@ describe('resolveFlakeEating', () => {
         },
       ],
     })
-    const { state: next } = resolveFlakeEating(state)
+    const { state: next } = resolveFlakeEating(state, testParams())
     expect(next.food).toHaveLength(1)
     expect(next.liveFish[0].health).toBe(2)
   })
@@ -34,6 +33,7 @@ describe('resolveFlakeEating', () => {
       health: 2,
       physics: { position: { x: 50, y: 50 }, velocity: { x: 0, y: 0 } },
     })
+    const p = testParams()
     const state = minimalState({
       currentDay: 5,
       liveFish: [fish],
@@ -42,13 +42,13 @@ describe('resolveFlakeEating', () => {
           id: 'food-1',
           createdOnDay: 4,
           physics: {
-            position: { x: 50 + FOOD_PICKUP_RADIUS * 0.5, y: 50 },
+            position: { x: 50 + p.foodPickupRadius * 0.5, y: 50 },
             velocity: { x: 0, y: 0 },
           },
         },
       ],
     })
-    const { state: next, events } = resolveFlakeEating(state)
+    const { state: next, events } = resolveFlakeEating(state, p)
     expect(next.food).toHaveLength(0)
     expect(next.liveFish[0].health).toBe(3)
     expect(next.liveFish[0].lastAte).toBe(5)

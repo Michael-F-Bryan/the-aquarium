@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { MIN_FOOD_SEPARATION } from '../constants'
 import { dropFlakeFood } from './foodDrop'
 import { minimalState } from '../test/fixtures'
 import { testParams } from '../test/fixtures'
 
 describe('dropFlakeFood', () => {
-  it('rejects drop when another flake is within MIN_FOOD_SEPARATION', () => {
+  it('rejects drop when another flake is within minFoodSeparation', () => {
     const state = minimalState({
       nextEntityId: 2,
       food: [
@@ -20,7 +19,7 @@ describe('dropFlakeFood', () => {
       ],
     })
     const p = testParams()
-    const dx = MIN_FOOD_SEPARATION * 0.5
+    const dx = p.minFoodSeparation * 0.5
     const next = dropFlakeFood(state, p, 100 + dx, 100)
     expect(next.food).toHaveLength(1)
     expect(next.nextEntityId).toBe(2)
@@ -41,7 +40,7 @@ describe('dropFlakeFood', () => {
       ],
     })
     const p = testParams()
-    const next = dropFlakeFood(state, p, 100 + MIN_FOOD_SEPARATION, 100)
+    const next = dropFlakeFood(state, p, 100 + p.minFoodSeparation, 100)
     expect(next.food).toHaveLength(2)
   })
 
