@@ -32,3 +32,5 @@ export {
   wallDeltaToSimDays,
 } from "./simulationClock";
 export type { SimulationClockState } from "./simulationClock";
+export { stepFishKinematicsWallDelta } from "./movement/fishKinematics";
+export type { StepFishKinematicsOptions } from "./movement/fishKinematics";
