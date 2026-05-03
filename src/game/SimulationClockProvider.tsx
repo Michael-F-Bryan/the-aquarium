@@ -4,8 +4,15 @@ import { SimulationClockContext, type SimulationClockContextValue } from "./simu
 
 const initialClock: SimulationClockState = { paused: false, simDays: 0 };
 
-export function SimulationClockProvider({ children }: { children: ReactNode }) {
-  const [clock, setClock] = useState<SimulationClockState>(initialClock);
+export function SimulationClockProvider({
+  children,
+  initialClockState = initialClock,
+}: {
+  children: ReactNode;
+  /** Hydration from persisted run snapshot (issue #20). */
+  initialClockState?: SimulationClockState;
+}) {
+  const [clock, setClock] = useState<SimulationClockState>(initialClockState);
 
   const advanceByWallDelta = useCallback((deltaWallSeconds: number) => {
     setClock((c) => advanceClockByWallDelta(c, deltaWallSeconds));

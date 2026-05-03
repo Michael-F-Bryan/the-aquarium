@@ -1,6 +1,9 @@
+import { useState } from "react";
+import { RunSnapshotPersistenceEffect } from "./game/RunSnapshotPersistenceEffect";
 import { SimulationClockProvider } from "./game/SimulationClockProvider";
 import { SimulationWorldProvider } from "./game/SimulationWorldProvider";
 import { useSimulationClock } from "./game/simulationClockContext";
+import { loadRunBootstrapFromLocalStorage } from "./persistence/runSnapshotStorage";
 import { TankScene } from "./tank/TankScene";
 import { DayCounter } from "./ui/DayCounter";
 import { ScorePlaceholder } from "./ui/ScorePlaceholder";
@@ -42,9 +45,11 @@ function GameShell() {
 }
 
 export default function App() {
+  const [bootstrap] = useState(() => loadRunBootstrapFromLocalStorage());
   return (
-    <SimulationClockProvider>
-      <SimulationWorldProvider>
+    <SimulationClockProvider initialClockState={bootstrap.simClockState}>
+      <SimulationWorldProvider runSeed={bootstrap.runSeed} world={bootstrap.world}>
+        <RunSnapshotPersistenceEffect />
         <GameShell />
       </SimulationWorldProvider>
     </SimulationClockProvider>
