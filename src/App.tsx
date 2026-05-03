@@ -11,20 +11,15 @@ import {
 } from './game/autosave'
 import { defaultParams, type Params } from './game/params'
 import { newGameState, type State } from './game/types'
+import {
+  buildAutoplayLogJson,
+  type AutoplayLogEntry,
+} from './game/autoplay/logExport'
 import { chooseAutoplayFoodDrop } from './game/autoplay/policy'
 import { dropFlakeFood } from './game/mechanics/foodDrop'
 import { buildReviewSessionPreset } from './game/reviewPreset'
 import { formatSimulationEvent } from './game/toastMessages'
 import { update } from './game/update'
-
-type AutoplayLogEntry = {
-  atDay: number
-  action: 'drop' | 'skip'
-  reason: string
-  targetFishId?: string
-  liveFishCount: number
-  foodCount: number
-}
 
 function App() {
   const [params, setParams] = useState<Params>(() => defaultParams)
@@ -292,22 +287,33 @@ function App() {
   }, [])
 
   const handleCopyAutoplayLog = useCallback(async () => {
-    const payload = JSON.stringify(
-      {
-        createdAt: new Date().toISOString(),
-        params,
-        entries: autoplayLog,
-      },
-      null,
-      2,
-    )
+    const payload = buildAutoplayLogJson({
+      createdAtIso: new Date().toISOString(),
+      params,
+      entries: autoplayLog,
+    })
     try {
       await navigator.clipboard.writeText(payload)
       pushToast(`Copied autoplay log (${autoplayLog.length} entries)`)
     } catch {
-      pushToast('Could not copy autoplay log')
+      pushToast('Clipboard blocked; use Download log')
     }
   }, [autoplayLog, params, pushToast])
+
+  const handleDownloadAutoplayLog = useCallback(() => {
+    const payload = buildAutoplayLogJson({
+      createdAtIso: new Date().toISOString(),
+      params,
+      entries: autoplayLog,
+    })
+    const blob = new Blob([payload], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `autoplay-log-day-${Math.floor(gameState.currentDay)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [autoplayLog, gameState.currentDay, params])
 
   const handleClearAutoplayLog = useCallback(() => {
     setAutoplayLog([])
@@ -370,6 +376,7 @@ function App() {
           onAutoplayIntervalMsChange={setAutoplayIntervalMs}
           onClearAutoplayLog={handleClearAutoplayLog}
           onCopyAutoplayLog={handleCopyAutoplayLog}
+          onDownloadAutoplayLog={handleDownloadAutoplayLog}
         />
 
         <main className="relative min-h-0 min-w-0 flex-1 bg-slate-900">

@@ -19,6 +19,7 @@ type Props = {
   onAutoplayIntervalMsChange: (next: number) => void
   onClearAutoplayLog: () => void
   onCopyAutoplayLog: () => void
+  onDownloadAutoplayLog: () => void
 }
 
 export function LeftPanel({
@@ -34,6 +35,7 @@ export function LeftPanel({
   onAutoplayIntervalMsChange,
   onClearAutoplayLog,
   onCopyAutoplayLog,
+  onDownloadAutoplayLog,
 }: Props) {
   return (
     <aside className="flex w-72 shrink-0 flex-col gap-4 border-r border-slate-800 bg-slate-950/80 p-4">
@@ -51,6 +53,7 @@ export function LeftPanel({
         onIntervalMsChange={onAutoplayIntervalMsChange}
         onClear={onClearAutoplayLog}
         onCopy={onCopyAutoplayLog}
+        onDownload={onDownloadAutoplayLog}
       />
       <DevSnapshotControls gameState={state} onReplaceGameState={onReplaceGameState} />
     </aside>

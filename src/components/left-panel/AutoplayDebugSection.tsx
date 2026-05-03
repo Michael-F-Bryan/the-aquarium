@@ -6,6 +6,7 @@ type Props = {
   onIntervalMsChange: (next: number) => void
   onClear: () => void
   onCopy: () => void
+  onDownload: () => void
 }
 
 export function AutoplayDebugSection({
@@ -16,6 +17,7 @@ export function AutoplayDebugSection({
   onIntervalMsChange,
   onClear,
   onCopy,
+  onDownload,
 }: Props) {
   if (!import.meta.env.DEV) return null
 
@@ -63,6 +65,13 @@ export function AutoplayDebugSection({
           className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-100 hover:bg-slate-800"
         >
           Copy log
+        </button>
+        <button
+          type="button"
+          onClick={onDownload}
+          className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-100 hover:bg-slate-800"
+        >
+          Download log
         </button>
         <button
           type="button"

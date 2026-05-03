@@ -100,3 +100,18 @@
 - Increase feeding clarity (stronger eat feedback + clearer food lifecycle cues).
 - Make progression tension ramp gradually (from care basics -> growth/reproduction -> predator dynamics).
 - Use harness metrics to tune pacing objectively (time to first death, save opportunities, event density, growth slope).
+
+## Pass 4 - Longer Autoplay Session (Post-Fix)
+
+- Setup: applied review preset with autoplay enabled and ran for multiple minutes.
+- Confirmed autoplay now executes continuously and generates dense logs.
+- Early phase remains strong: visible growth and clearer reviewability than manual-only runs.
+- New concerns observed:
+  - possible unexplained population collapse event in one long run (needs deterministic reproduction to verify vs observer artifact)
+  - mid-game tension progression still shallow; loop can feel repetitive after early stabilization
+  - clipboard-based export remains environment-dependent (added download fallback in code to reduce this blocker)
+
+## Review Confidence
+
+- High confidence in early-loop observations (hunger/feeding/survival readability) due repeated passes.
+- Medium confidence in long-run population anomaly until a deterministic fixed-step runner is added.

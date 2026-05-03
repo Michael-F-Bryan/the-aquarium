@@ -180,6 +180,7 @@ Status update (partially implemented):
 - Dev-only autoplay controls now run policy decisions on a configurable interval.
 - Action logs can be copied to JSON from the UI.
 - Review preset now auto-enables autoplay and sets a stable decision interval.
+- Log export now has a non-clipboard fallback (download JSON) for automation environments.
 - Remaining gap: true fixed-step offline runner and seed-controlled scenario batches.
 
 ### Phase 3: Replay and Review Workflow
