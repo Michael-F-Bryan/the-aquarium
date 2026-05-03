@@ -10,6 +10,7 @@ import {
 } from "./tankCameraConstants";
 import { FishMeshesFromWorld } from "./FishMeshesFromWorld";
 import { SimulationFrameBridge } from "./SimulationFrameBridge";
+import { TankDropFoodSurface } from "./TankDropFoodSurface";
 
 const sceneBackground = new Color(TANK_SCENE_BACKGROUND);
 
@@ -39,6 +40,7 @@ export function TankScene({ className, paused = false }: TankSceneProps) {
         }}
       >
         <SimulationFrameBridge />
+        <TankDropFoodSurface />
         <FishMeshesFromWorld />
         <ambientLight intensity={0.55} />
         <directionalLight position={[4, 6, 3]} intensity={0.85} />
