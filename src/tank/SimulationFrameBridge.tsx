@@ -3,6 +3,7 @@ import { useSimulationClock } from "../game/simulationClockContext";
 import { useSimulationWorld } from "../game/simulationWorldContext";
 import {
   clampWallDeltaSeconds,
+  despawnExpiredFood,
   dispatchFishAteFoodEvents,
   dispatchFishHungerMilestoneEvents,
   stepFishKinematicsWallDelta,
@@ -22,6 +23,7 @@ export function SimulationFrameBridge() {
   useFrame((_, delta) => {
     if (paused) return;
     const dt = clampWallDeltaSeconds(delta);
+    despawnExpiredFood(world, { simDays });
     updateHerbivoreNearestFoodTargets(world);
     stepFishKinematicsWallDelta(world, { wallDeltaSeconds: dt, simTimeDays: simDays });
     const eatEvents = stepHerbivoreEatNearbyFood(world, { paused });
