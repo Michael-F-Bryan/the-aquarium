@@ -54,7 +54,7 @@ export function DevSnapshotControls({ gameState, onReplaceGameState }: Props) {
         rows={6}
         spellCheck={false}
         className="w-full resize-y rounded border border-slate-700 bg-slate-950 px-2 py-1.5 font-mono text-[10px] leading-snug text-slate-200"
-        placeholder='{ "schemaVersion": 1, "state": { ... } }'
+        placeholder='{ "schemaVersion": 3, "state": { ... } }'
       />
       {error ? (
         <p className="text-[10px] text-red-300">{error}</p>
