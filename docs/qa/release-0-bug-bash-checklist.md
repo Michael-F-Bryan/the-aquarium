@@ -33,3 +33,10 @@ Date: 2026-05-03
 ## Blocker Summary
 
 - No release blockers identified in this bug bash pass.
+
+## Issue #24 Resolution Notes
+
+- Confirmed all defects logged during #23 are classified as non-blockers.
+- Blocker fix scope for #24 is therefore empty for this release pass.
+- Remaining defects #180 and #183 stay tracked as non-blockers under milestone Release 0.
+- Validation for #24 closure is provided via fresh `pnpm lint`, `pnpm test`, and `pnpm build` runs in this PR.
