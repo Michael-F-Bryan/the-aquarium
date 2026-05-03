@@ -18,6 +18,18 @@ describe("App shell", () => {
     expect(container.querySelector("canvas")).toBeTruthy();
   });
 
+  it("enforces full-viewport sizing contract for the tank stage", () => {
+    const { container } = render(<App />);
+    const shellRoot = container.firstElementChild;
+    const tankSceneRoot = screen.getByTestId("tank-scene-root");
+
+    expect(shellRoot).toBeTruthy();
+    expect(shellRoot?.className).toContain("h-dvh");
+    expect(shellRoot?.className).not.toContain("min-h-dvh");
+    expect(tankSceneRoot.className).toContain("h-full");
+    expect(tankSceneRoot.className).toContain("min-h-0");
+  });
+
   it("shows the simulation day counter in the HUD", () => {
     render(<App />);
     expect(screen.getByRole("status", { name: /current simulation day,\s*1/i })).toBeTruthy();

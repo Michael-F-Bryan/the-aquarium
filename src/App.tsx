@@ -12,7 +12,7 @@ import { ToastLogShell } from "./ui/ToastLogShell";
 function GameShell() {
   const { paused, togglePause } = useSimulationClock();
   return (
-    <div className="relative flex min-h-dvh flex-col">
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden">
       <div className="pointer-events-auto absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
         <DayCounter />
         <ScorePlaceholder />
@@ -36,7 +36,7 @@ function GameShell() {
           </div>
         ) : null}
       </div>
-      <TankScene className="min-h-dvh w-full flex-1" paused={paused} />
+      <TankScene className="h-full min-h-0 w-full flex-1" paused={paused} />
       <p className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 text-sm text-neutral-400 drop-shadow-sm">
         The Aquarium
       </p>
