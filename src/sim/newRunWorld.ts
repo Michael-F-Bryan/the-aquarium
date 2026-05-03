@@ -14,6 +14,7 @@ export function starterFishEntityForRunSeed(seed: number): FishEntity {
   return {
     fish: {
       displayName: "Pebble",
+      alive: true,
       hungerDays: 0,
       health: 3,
       hungerStage: "healthy",

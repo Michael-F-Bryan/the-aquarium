@@ -13,6 +13,7 @@ import type { FishEntity, FoodEntity, SimulationEntity } from "./index";
 
 const validFishPayload = {
   fish: {
+    alive: true,
     displayName: "Pebble",
     hungerDays: 0,
     health: 3 as const,

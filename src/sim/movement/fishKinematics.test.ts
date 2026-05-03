@@ -7,6 +7,7 @@ import { stepFishKinematicsWallDelta } from "./fishKinematics";
 
 const validFishPayload = {
   fish: {
+    alive: true,
     displayName: "Pebble",
     hungerDays: 0,
     health: 3 as const,
@@ -53,6 +54,33 @@ describe("stepFishKinematicsWallDelta", () => {
       simDays += wallDeltaToSimDays(wallDt);
     }
     expect(distanceSq(fish.position, p0)).toBeLessThan(1e-6);
+  });
+
+  it("does not move a dead fish (idle wander skipped)", () => {
+    const world = createSimulationWorld();
+    registerFish(world, {
+      fish: {
+        alive: false,
+        displayName: "Floater",
+        hungerDays: 5,
+        health: 0,
+        hungerStage: "starving",
+        weightGrams: 100,
+        species: { kind: "herbivore" },
+      },
+      position: { x: 0.1, y: 0.35, z: -0.05 },
+      velocity: { x: 0.05, y: 0, z: 0 },
+    });
+    const fish = [...fishWithKinematics(world)][0]!;
+    const p0 = { ...fish.position };
+    const wallDt = clampWallDeltaSeconds(1 / 60);
+    for (let i = 0; i < 120; i++) {
+      stepFishKinematicsWallDelta(world, { wallDeltaSeconds: wallDt, simTimeDays: i * wallDeltaToSimDays(wallDt) });
+    }
+    expect(fish.position).toEqual(p0);
+    expect(fish.velocity.x).toBe(0.05);
+    expect(fish.velocity.y).toBe(0);
+    expect(fish.velocity.z).toBe(0);
   });
 
   it("is deterministic for identical step inputs", () => {
