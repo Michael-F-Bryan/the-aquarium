@@ -27,6 +27,7 @@ function cloneDeadFish(fish: DeadFish): DeadFish {
   return {
     ...cloneFish(fish),
     diedOnDay: fish.diedOnDay,
+    deathCause: fish.deathCause,
   }
 }
 

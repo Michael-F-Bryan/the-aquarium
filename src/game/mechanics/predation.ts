@@ -38,7 +38,7 @@ export function resolveCarnivorePredation(
     }
     if (!best) continue
     eaten.add(best.id)
-    newDead.push({ ...best, health: 0, diedOnDay })
+    newDead.push({ ...best, health: 0, diedOnDay, deathCause: 'predation' })
     const weightGainG = Math.round(best.weightG * params.predationWeightGainFraction)
     liveFish = liveFish.map((f) => {
       if (f.id !== c.id) return f

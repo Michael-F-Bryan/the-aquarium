@@ -119,7 +119,7 @@ function closeOneCalendarDay(
   const diedOnDay = completedDayFloor + 1
   liveFish = liveFish.filter((fish) => {
     if (fish.health > 0) return true
-    newDead.push({ ...fish, diedOnDay })
+    newDead.push({ ...fish, diedOnDay, deathCause: 'starvation' })
     events.push({
       type: 'fish_died',
       fishId: fish.id,

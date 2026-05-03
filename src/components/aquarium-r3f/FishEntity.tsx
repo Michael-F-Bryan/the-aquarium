@@ -245,7 +245,10 @@ export function LiveFishEntity({ fish, aquariumSize }: FishEntityProps) {
 }
 
 export function DeadFishEntity({ fish, aquariumSize }: DeadFishEntityProps) {
-  const texture = useSpriteTexture(FISH_SPRITE_PATH.dead)
+  const eaten = fish.deathCause === 'predation'
+  const texture = useSpriteTexture(
+    eaten ? FISH_SPRITE_PATH.deadSkeleton : FISH_SPRITE_PATH.dead,
+  )
   const scale = logWeightScale(fish.weightG) * fish.appearance.finScale
   const labelY = (FISH_SPRITE_H * scale) / 2 + 20
   const traits = fishTraitPresentation(fish.appearance)
@@ -254,19 +257,25 @@ export function DeadFishEntity({ fish, aquariumSize }: DeadFishEntityProps) {
     <group position={toScenePoint(fishAnchorPoint(fish), aquariumSize, 3)}>
       <FishLabel lines={[fish.name]} y={labelY} muted />
       <group scale={[scale, scale, 1]}>
-        <FishTail kind={traits.tail.kind} color={traits.tail.color} opacity={0.38} />
+        {eaten ? null : (
+          <FishTail kind={traits.tail.kind} color={traits.tail.color} opacity={0.38} />
+        )}
         <mesh>
           <planeGeometry args={[FISH_SPRITE_W, FISH_SPRITE_H]} />
           <meshBasicMaterial
             map={texture}
             transparent
-            opacity={0.72}
+            opacity={eaten ? 0.88 : 0.72}
             toneMapped={false}
             depthWrite={false}
           />
         </mesh>
-        <FishFins kind={traits.fin.kind} color={traits.fin.color} opacity={0.4} />
-        <FishEyelashes eyelashes={traits.eyelashes} opacity={0.45} />
+        {eaten ? null : (
+          <>
+            <FishFins kind={traits.fin.kind} color={traits.fin.color} opacity={0.4} />
+            <FishEyelashes eyelashes={traits.eyelashes} opacity={0.45} />
+          </>
+        )}
       </group>
     </group>
   )

@@ -269,6 +269,7 @@ describe('simulationSchedule', () => {
             },
           }),
           diedOnDay: 0,
+          deathCause: 'starvation' as const,
         },
       ],
     })

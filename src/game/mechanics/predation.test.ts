@@ -34,6 +34,7 @@ describe('resolveCarnivorePredation', () => {
     expect(next.liveFish.map((f) => f.id)).toEqual(['c1'])
     expect(next.deadFish).toHaveLength(1)
     expect(next.deadFish[0].id).toBe('p1')
+    expect(next.deadFish[0].deathCause).toBe('predation')
     const hunter = next.liveFish[0]
     expect(hunter.lastAte).toBe(3)
     expect(hunter.weightG).toBe(

@@ -97,12 +97,18 @@ function fish(x: unknown, label: string): State['liveFish'][0] {
   }
 }
 
+function fishDeathCause(x: unknown): State['deadFish'][0]['deathCause'] {
+  if (x === 'predation') return 'predation'
+  return 'starvation'
+}
+
 function deadFish(x: unknown, label: string): State['deadFish'][0] {
   const f = fish(x, label)
   if (!isRecord(x)) throw new Error(`${label} must be an object`)
   return {
     ...f,
     diedOnDay: int(x.diedOnDay, `${label}.diedOnDay`),
+    deathCause: fishDeathCause(x.deathCause),
   }
 }
 

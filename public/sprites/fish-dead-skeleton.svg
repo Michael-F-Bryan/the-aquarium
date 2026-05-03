@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 40" width="72" height="40">
+  <defs>
+    <linearGradient id="skBone" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e2e8f0"/>
+      <stop offset="100%" style="stop-color:#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-14 36 20)">
+    <!-- spine -->
+    <path
+      fill="none"
+      stroke="url(#skBone)"
+      stroke-width="2.2"
+      stroke-linecap="round"
+      d="M10 20 L58 20"
+    />
+    <!-- skull -->
+    <ellipse cx="58" cy="20" rx="9" ry="11" fill="#cbd5e1" stroke="#64748b" stroke-width="1.2"/>
+    <circle cx="54" cy="17" r="2.2" fill="#475569"/>
+    <circle cx="62" cy="17" r="2.2" fill="#475569"/>
+    <!-- ribs -->
+    <path
+      fill="none"
+      stroke="#94a3b8"
+      stroke-width="1.4"
+      stroke-linecap="round"
+      d="M22 14 L22 26 M30 12 L30 28 M38 11 L38 29 M46 12 L46 28"
+    />
+    <!-- tail bones -->
+    <path fill="#cbd5e1" stroke="#64748b" stroke-width="1" d="M6 20 L-2 12 L-2 28 Z"/>
+  </g>
+</svg>

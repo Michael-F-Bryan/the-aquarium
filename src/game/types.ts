@@ -65,8 +65,12 @@ export type Fish = {
   lastAte: number
 }
 
+/** How the fish became a corpse in `deadFish` (drives presentation). */
+export type FishDeathCause = 'starvation' | 'predation'
+
 export type DeadFish = Fish & {
   diedOnDay: number
+  deathCause: FishDeathCause
 }
 
 export type Physics = {

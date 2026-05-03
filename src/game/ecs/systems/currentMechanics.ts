@@ -409,7 +409,7 @@ export const resolveCarnivorePredationSystem: SimulationSystem = {
       if (!best) continue
 
       eaten.add(best.id)
-      newDead.push({ ...best, health: 0, diedOnDay })
+      newDead.push({ ...best, health: 0, diedOnDay, deathCause: 'predation' })
       const weightGainG = Math.round(best.weightG * params.predationWeightGainFraction)
       liveFish = liveFish.map((fish) => {
         if (fish.id !== carnivore.id) return fish
@@ -535,7 +535,7 @@ export const runCalendarBoundariesSystem: SimulationSystem = {
 
     for (const entity of [...liveFishEntities(runtime)]) {
       if (entity.fish.health > 0) continue
-      dead.push({ ...entity.fish, diedOnDay })
+      dead.push({ ...entity.fish, diedOnDay, deathCause: 'starvation' })
       events.push({
         type: 'fish_died',
         fishId: entity.fish.id,

@@ -8,6 +8,7 @@ describe('sinkAndPruneDead', () => {
     const dead = {
       ...minimalFish({ id: 'd1', health: 0 }),
       diedOnDay: 1,
+      deathCause: 'starvation' as const,
       physics: {
         position: { x: 100, y: 10 },
         velocity: { x: 0, y: 0 },
@@ -31,6 +32,7 @@ describe('sinkAndPruneDead', () => {
     const dead = {
       ...minimalFish({ id: 'd1', health: 0 }),
       diedOnDay: 0,
+      deathCause: 'starvation' as const,
       physics: {
         position: { x: 100, y: 100 },
         velocity: { x: 0, y: 0 },

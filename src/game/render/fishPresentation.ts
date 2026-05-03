@@ -1,11 +1,12 @@
 import type { FishAppearance } from '../types'
 
-export type FishSpriteKey = 'normal' | 'carnivore' | 'dead'
+export type FishSpriteKey = 'normal' | 'carnivore' | 'dead' | 'deadSkeleton'
 
 export const FISH_SPRITE_PATH: Record<FishSpriteKey, string> = {
   normal: '/sprites/fish-normal.svg',
   carnivore: '/sprites/fish-carnivore.svg',
   dead: '/sprites/fish-dead.svg',
+  deadSkeleton: '/sprites/fish-dead-skeleton.svg',
 }
 
 export type FishFinPresentation = {
