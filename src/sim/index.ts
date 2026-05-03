@@ -51,6 +51,10 @@ export {
   updateHerbivoreNearestFoodTargets,
 } from "./targeting/nearestFoodTargeting";
 export {
+  FOOD_LIFETIME_SIM_DAYS,
+  despawnExpiredFood,
+} from "./interactions/despawnExpiredFood";
+export {
   HERBIVORE_FOOD_EAT_DISTANCE,
   stepHerbivoreEatNearbyFood,
 } from "./interactions/herbivoreEatNearbyFood";
