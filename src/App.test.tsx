@@ -18,6 +18,11 @@ describe("App shell", () => {
     expect(container.querySelector("canvas")).toBeTruthy();
   });
 
+  it("shows the simulation day counter in the HUD", () => {
+    render(<App />);
+    expect(screen.getByRole("status", { name: /current simulation day,\s*1/i })).toBeTruthy();
+  });
+
   it("shows paused status after toggling pause and hides it on resume", () => {
     render(<App />);
     expect(screen.queryByRole("status", { name: /simulation paused/i })).toBeNull();
