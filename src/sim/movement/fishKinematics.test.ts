@@ -42,18 +42,19 @@ describe("stepFishKinematicsWallDelta", () => {
     expect(distanceSq(fish.position, p0)).toBeGreaterThan(1e-4);
   });
 
-  it("does not idle-wander when movementTargetPosition is set", () => {
+  it("steers toward movementTargetPosition instead of idle wander", () => {
     const world = createSimulationWorld();
     const fish = registerFish(world, validFishPayload);
     (fish as SimulationEntity).movementTargetPosition = { x: 2, y: 0.5, z: -1 };
-    const p0 = { ...fish.position };
+    const p0x = fish.position.x;
     let simDays = 0;
     const wallDt = clampWallDeltaSeconds(1 / 60);
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 180; i++) {
       stepFishKinematicsWallDelta(world, { wallDeltaSeconds: wallDt, simTimeDays: simDays });
       simDays += wallDeltaToSimDays(wallDt);
     }
-    expect(distanceSq(fish.position, p0)).toBeLessThan(1e-6);
+    expect(fish.position.x).toBeGreaterThan(p0x + 0.05);
+    expect(isWithinStarterSpawnVolume(fish.position)).toBe(true);
   });
 
   it("does not move a dead fish (idle wander skipped)", () => {

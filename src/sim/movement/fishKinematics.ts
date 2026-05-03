@@ -11,6 +11,8 @@ export type StepFishKinematicsOptions = {
 };
 
 const MAX_IDLE_SPEED = 0.32;
+/** Slightly faster than idle wander so flakes are visibly chased (`docs/the-game.md` feeding). */
+const MAX_TARGET_CHASE_SPEED = 0.42;
 const VELOCITY_RESPONSIVENESS = 5.5;
 
 function wanderOffsetFromName(displayName: string): number {
@@ -62,7 +64,7 @@ function desiredIdleVelocity(displayName: string, simTimeDays: number): Vec3 {
 }
 
 /**
- * Movement phase: idle wander for fish with no active movement target.
+ * Movement phase: chase `movementTargetPosition` when set, otherwise idle wander.
  * Mutates ECS `position` / `velocity`; clamped to `STARTER_SPAWN_VOLUME` tank bounds.
  */
 export function stepFishKinematicsWallDelta(
@@ -78,11 +80,37 @@ export function stepFishKinematicsWallDelta(
   for (const entity of fishWithKinematics(world)) {
     const e = entity as FishKinematicsEntity & SimulationEntity;
     if (!e.fish.alive) continue;
-    if (hasActiveMovementTarget(e)) continue;
 
-    const desired = desiredIdleVelocity(e.fish.displayName, simTimeDays);
     const v = e.velocity;
     const p = e.position;
+
+    if (hasActiveMovementTarget(e)) {
+      const target = e.movementTargetPosition!;
+      const toX = target.x - p.x;
+      const toY = target.y - p.y;
+      const toZ = target.z - p.z;
+      const dist = Math.hypot(toX, toY, toZ);
+      if (dist > 1e-6) {
+        const inv = 1 / dist;
+        const desired = {
+          x: toX * inv * MAX_TARGET_CHASE_SPEED,
+          y: toY * inv * MAX_TARGET_CHASE_SPEED,
+          z: toZ * inv * MAX_TARGET_CHASE_SPEED,
+        };
+        v.x += (desired.x - v.x) * blend;
+        v.y += (desired.y - v.y) * blend;
+        v.z += (desired.z - v.z) * blend;
+      }
+
+      p.x += v.x * dt;
+      p.y += v.y * dt;
+      p.z += v.z * dt;
+
+      clampPositionResolveVelocity(p, v);
+      continue;
+    }
+
+    const desired = desiredIdleVelocity(e.fish.displayName, simTimeDays);
 
     v.x += (desired.x - v.x) * blend;
     v.y += (desired.y - v.y) * blend;
