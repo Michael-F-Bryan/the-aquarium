@@ -2,6 +2,7 @@ import { SimulationClockProvider } from "./game/SimulationClockProvider";
 import { useSimulationClock } from "./game/simulationClockContext";
 import { TankScene } from "./tank/TankScene";
 import { DayCounter } from "./ui/DayCounter";
+import { ToastLogShell } from "./ui/ToastLogShell";
 
 function GameShell() {
   const { paused, togglePause } = useSimulationClock();
@@ -9,6 +10,7 @@ function GameShell() {
     <div className="relative flex min-h-dvh flex-col">
       <div className="pointer-events-auto absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
         <DayCounter />
+        <ToastLogShell entries={[]} />
         <button
           type="button"
           className="rounded-md border border-neutral-600 bg-neutral-900/90 px-3 py-1.5 text-sm font-medium text-neutral-100 shadow-sm backdrop-blur-sm hover:bg-neutral-800"

@@ -23,6 +23,11 @@ describe("App shell", () => {
     expect(screen.getByRole("status", { name: /current simulation day,\s*1/i })).toBeTruthy();
   });
 
+  it("shows the toast log panel in the HUD", () => {
+    render(<App />);
+    expect(screen.getByRole("log", { name: /event log/i })).toBeTruthy();
+  });
+
   it("shows paused status after toggling pause and hides it on resume", () => {
     render(<App />);
     expect(screen.queryByRole("status", { name: /simulation paused/i })).toBeNull();
