@@ -47,4 +47,9 @@ export type SimulationEntity = {
   velocity?: Vec3;
   fish?: FishState;
   food?: FoodState;
+  /**
+   * When set, higher-level targeting owns steering; idle wander is skipped.
+   * Not validated by `assertFishEntityShape` (runtime-only / save-roundtrip optional).
+   */
+  movementTargetPosition?: Vec3;
 };
